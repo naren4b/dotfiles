@@ -20,3 +20,7 @@ ALT + UP ARROW
 ALT + DOWN ARROW
 ALT + LEFT
 ALT + RIGHT
+
+Sync accross 
+--------------
+F10
