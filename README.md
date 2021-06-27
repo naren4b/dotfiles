@@ -13,10 +13,10 @@ F5 --- Split  Horizontal
 F6 --- Split Vertical
 
 
-Navigation
+Navigation [M --> meta key windows ALT]
 -------------------
 
-ALT + UP ARROW 
+ALT + UP ARROW   
 ALT + DOWN ARROW
 ALT + LEFT
 ALT + RIGHT
