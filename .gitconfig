@@ -1,0 +1,7 @@
+[user]
+        name = Narendranath Panda
+        email = narendranath.panda@gmail.com
+[credential "https://git.company.com"]
+        provider = generic
+[commit]
+  template = ~/.gitmessage
