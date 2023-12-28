@@ -5,7 +5,7 @@ findmnt
 reboot
 
 # Utility Software
-apt-get install git curl vim python3-pip yq
+apt-get install git curl vim python3-pip yq tree
 
 apt-get --allow-unauthenticated update
 apt-get --allow-unauthenticated install -y bash-completion binutils
