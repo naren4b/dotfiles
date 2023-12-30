@@ -5,9 +5,30 @@ findmnt
 /media/nabh/VBox_GAs_7.0.12/VBoxLinuxAdditions.run
 reboot
 ```
+# Install docker 
+```
+apt-get install docker.io
+sudo chmod 666 /var/run/docker.sock
+systemctl restart docker.service
+
+```
+
+# Get the sudo access 
+```
+
+sudo adduser naren
+sudo usermod -aG sudo naren
+sudo visudo
+naren ALL = NOPASSWD : ALL
+
+ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@127.0.1.1
+
+```
+
 # Utility Software
 ```
-apt-get install git curl vim python3-pip yq tree
+apt-get install git curl vim python3-pip yq tree openssh-client openssh-server docker.io
 apt-get --allow-unauthenticated update
 apt-get --allow-unauthenticated install -y bash-completion binutils
 echo 'colorscheme ron' >>~/.vimrc
