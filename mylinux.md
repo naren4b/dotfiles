@@ -73,7 +73,7 @@ alias python=python3
 [ $(uname -m) = aarch64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-arm64
 chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
-apt-get install docker.io
+
 
 kind create cluster
 kubectl get nodes
