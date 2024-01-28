@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: me-deployment
+  labels:
+    app: me
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: me
+  template:
+    metadata:
+      labels:
+        app: me
+    spec:
+      containers:
+      - name: me
+        image: naren4b/me:v1.0.4
+        ports:
+        - containerPort: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: me-service
+spec:
+  selector:
+    app: me
+  ports:
+  - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: me-ingress
+spec:
+  rules:
+  - host: "me.127.0.0.1.nip.io"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: me-service
+            port:
+              number: 80
