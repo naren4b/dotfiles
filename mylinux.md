@@ -70,8 +70,18 @@ sudo chmod +x ./kubectl-all-images
 sudo mv ./kubectl-all-images /usr/local/bin
 kubectl plugin list
 kubectl all images
-
 ```
+# Debug
+```
+# Run a pod 
+kubectl run ephemeral-demo --image=registry.k8s.io/pause:3.1 --restart=Never
+
+#Attach the debug pod 
+#kubectl debug -it <pod-name> --image=busybox:1.28 --target=<container-name>
+
+kubectl debug -it ephemeral-demo --image=busybox:1.28 --target=ephemeral-demo
+```
+
 # helm
 ```
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
