@@ -56,6 +56,21 @@ chmod +x ./kubectl
 mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$HOME/bin:$PATH
 echo 'export PATH=$HOME/bin:$PATH' >>~/.bashrc
 kubectl version --client
+
+sudo apt-get install bash-completion
+sudo apt install fzf
+sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+```
+# plugins
+```
+echo -e '#!/bin/bash\n\nkubectl get pods -A -o custom-columns='NAME:metadata.name,IMAGES:spec.containers[*].image'' > kubectl-all-images
+sudo chmod +x ./kubectl-all-images
+sudo mv ./kubectl-all-images /usr/local/bin
+kubectl plugin list
+kubectl all images
+
 ```
 # helm
 ```
@@ -82,4 +97,5 @@ source <(kubectl completion bash)
 echo "source <(kubectl completion bash)" >>~/.bashrc
 complete -o default -F __start_kubectl k
 ```
+# kubectl 
 
