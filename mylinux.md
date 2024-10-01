@@ -109,3 +109,4 @@ complete -o default -F __start_kubectl k
 ```
 # kubectl 
 
+https://gist.githubusercontent.com/rothgar/a2092f73b06465ddda0e855cc1f6ec2b/raw/3dde648fc2ff8ad08a8cf15308950caa2dfeabc2/k8s.zsh
