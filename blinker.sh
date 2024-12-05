@@ -10,7 +10,7 @@ spinner() {
     local temp
 
     printf "Sleeping for 50 seconds: "
-    for i in $(seq 1 500); do
+    while kill -0 $1 2>/dev/null; do
         temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
         spinstr=$temp${spinstr%"$temp"}
