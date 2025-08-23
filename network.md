@@ -22,3 +22,8 @@ DESCRIPTION
        ss  is  used to dump socket statistics. It allows showing information similar to netstat.  It can display more TCP and state informa-
        tion than other tools.
 ```
+
+# Ip address of a host 
+```
+ip -br -4 a
+```
