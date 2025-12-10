@@ -103,9 +103,20 @@
                 "source": "Windows.Terminal.VisualStudio"
             },
             {
+                "adjustIndistinguishableColors": "always",
+                "colorScheme": "One Half Dark",
+                "cursorShape": "underscore",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "size": 9,
+                    "weight": "light"
+                },
                 "guid": "{d8e96812-b789-5068-a5ae-10b2fb53e95f}",
                 "hidden": false,
+                "intenseTextStyle": "none",
                 "name": "Ubuntu 24.04.1 LTS",
+                "opacity": 80,
                 "source": "CanonicalGroupLimited.Ubuntu24.04LTS_79rhkp1fndgsc"
             },
             {
