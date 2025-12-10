@@ -69,3 +69,80 @@ cd ~/code/corporate/some-work-repo
 git config user.name
 git config user.email
 ```
+Add a commit template file and point each Git profile (personal/corporate) at the appropriate template.
+
+## 1. Create template files
+
+Example personal template, `~/.gitmessage-personal`:
+
+```text
+# Personal commit
+# <TYPE>: <short summary>
+#
+# Details:
+#
+# - Why:
+# - What:
+# - How:
+```
+
+Example corporate template, `~/.gitmessage-corporate`:
+
+```text
+# Corporate commit
+# JIRA-XXX: <short summary>
+#
+# Context:
+#
+# Changes:
+# - 
+#
+# Testing:
+# - 
+```
+
+Git will show these comments in the editor when you run `git commit`.[1][2][3]
+
+## 2. Wire templates into each profile config
+
+Update your existing identity-specific configs:
+
+`~/.gitconfig-personal`:
+
+```ini
+[user]
+    name = Your Personal Name
+    email = your.personal+git@example.com
+
+[commit]
+    template = ~/.gitmessage-personal
+```
+
+`~/.gitconfig-corporate`:
+
+```ini
+[user]
+    name = Your Corporate Name
+    email = your.corporate@company.com
+
+[commit]
+    template = ~/.gitmessage-corporate
+```
+
+Now the same `includeIf` rules you already have for personal/corporate directories will automatically select both the correct identity and the correct commit template.[4][5][6]
+
+## 3. Test
+
+In a personal repo directory:
+
+```bash
+git config commit.template
+git commit
+```
+
+In a corporate repo directory:
+
+```bash
+git config commit.template
+git commit
+```
