@@ -3,8 +3,8 @@
     "$schema": "https://aka.ms/terminal-profiles-schema",
     "actions": [],
     "copyFormatting": "none",
-    "copyOnSelect": false,
-    "defaultProfile": "{51855cb2-8cce-5362-8f54-464b92b32386}",
+    "copyOnSelect": true,
+    "defaultProfile": "{d8e96812-b789-5068-a5ae-10b2fb53e95f}",
     "keybindings": 
     [
         {
@@ -51,37 +51,9 @@
                 "name": "Command Prompt"
             },
             {
-                "adjustIndistinguishableColors": "always",
-                "backgroundImage": null,
-                "backgroundImageOpacity": 0.68,
-                "cursorHeight": 17,
-                "cursorShape": "vintage",
-                "elevate": true,
-                "font": 
-                {
-                    "size": 11,
-                    "weight": "extra-light"
-                },
-                "guid": "{963ff2f7-6aed-5ce3-9d91-90d99571f53a}",
-                "hidden": true,
-                "intenseTextStyle": "none",
-                "name": "Ubuntu-24.04",
-                "opacity": 69,
-                "source": "Windows.Terminal.Wsl",
-                "startingDirectory": "C:\\D",
-                "tabTitle": "uwsl",
-                "useAcrylic": true
-            },
-            {
                 "guid": "{8ab8e6f6-35c6-5b46-8419-3e1568105476}",
                 "hidden": false,
                 "name": "podman-machine-default",
-                "source": "Windows.Terminal.Wsl"
-            },
-            {
-                "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
-                "hidden": true,
-                "name": "Ubuntu",
                 "source": "Windows.Terminal.Wsl"
             },
             {
@@ -104,19 +76,21 @@
             },
             {
                 "adjustIndistinguishableColors": "always",
+                "backgroundImage": null,
+                "backgroundImageOpacity": 0.97,
                 "colorScheme": "One Half Dark",
                 "cursorShape": "underscore",
                 "experimental.retroTerminalEffect": false,
                 "font": 
                 {
-                    "size": 9,
+                    "size": 12,
                     "weight": "light"
                 },
                 "guid": "{d8e96812-b789-5068-a5ae-10b2fb53e95f}",
                 "hidden": false,
                 "intenseTextStyle": "none",
                 "name": "Ubuntu 24.04.1 LTS",
-                "opacity": 80,
+                "opacity": 100,
                 "source": "CanonicalGroupLimited.Ubuntu24.04LTS_79rhkp1fndgsc"
             },
             {
@@ -124,6 +98,24 @@
                 "hidden": false,
                 "name": "Ubuntu",
                 "source": "CanonicalGroupLimited.Ubuntu_79rhkp1fndgsc"
+            },
+            {
+                "guid": "{963ff2f7-6aed-5ce3-9d91-90d99571f53a}",
+                "hidden": true,
+                "name": "Ubuntu-24.04",
+                "source": "Windows.Terminal.Wsl"
+            },
+            {
+                "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
+                "hidden": true,
+                "name": "Ubuntu",
+                "source": "Windows.Terminal.Wsl"
+            },
+            {
+                "guid": "{4dd1e689-b517-5f39-947d-78e8a8bdf958}",
+                "hidden": false,
+                "name": "Ubuntu 20.04.6 LTS",
+                "source": "CanonicalGroupLimited.Ubuntu20.04LTS_79rhkp1fndgsc"
             }
         ]
     },
