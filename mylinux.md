@@ -1,12 +1,12 @@
 # Guest OS
-```
+```bash
 apt-get update -y
 findmnt
 /media/nabh/VBox_GAs_7.0.12/VBoxLinuxAdditions.run
 reboot
 ```
 # Install docker 
-```
+```bash
 apt-get install docker.io
 sudo chmod 666 /var/run/docker.sock
 systemctl restart docker.service
@@ -14,8 +14,7 @@ systemctl restart docker.service
 ```
 
 # Get the sudo access 
-```
-
+```bash
 sudo adduser naren
 sudo usermod -aG sudo naren
 sudo visudo
@@ -27,7 +26,7 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub root@127.0.1.1
 ```
 
 # Utility Software
-```
+```bash
 apt-get install git curl vim python3-pip yq tree openssh-client openssh-server docker.io
 apt-get --allow-unauthenticated update
 apt-get --allow-unauthenticated install -y bash-completion binutils
@@ -43,14 +42,14 @@ sed -i '1s/^/force_color_prompt=yes\n/' ~/.bashrc
 source ~/.bashrc
 ```
 # aws cli
-```
+```bash
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
 aws --version
 ```
 # kubectl
-```
+```bash
 curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.28.3/2023-11-14/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$HOME/bin:$PATH
@@ -64,7 +63,7 @@ sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
 sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
 ```
 # plugins
-```
+```bash
 echo -e '#!/bin/bash\n\nkubectl get pods -A -o custom-columns='NAME:metadata.name,IMAGES:spec.containers[*].image'' > kubectl-all-images
 sudo chmod +x ./kubectl-all-images
 sudo mv ./kubectl-all-images /usr/local/bin
@@ -72,9 +71,11 @@ kubectl plugin list
 kubectl all images
 ```
 # Debug
-```
+```bash
 # Run a pod 
 kubectl run ephemeral-demo --image=registry.k8s.io/pause:3.1 --restart=Never
+kubectl run -i --rm --tty debug --image=alpine --restart=Never -- sh
+apk add --update bind-tools net-tools openssl curl git python3 go 
 
 #Attach the debug pod 
 #kubectl debug -it <pod-name> --image=busybox:1.28 --target=<container-name>
@@ -83,7 +84,7 @@ kubectl debug -it ephemeral-demo --image=busybox:1.28 --target=ephemeral-demo
 ```
 
 # helm
-```
+```bash
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
@@ -93,7 +94,7 @@ alias python=python3
 ```
 
 # Kind Cluster
-```
+```bash
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
 [ $(uname -m) = aarch64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-arm64
 chmod +x ./kind
@@ -110,3 +111,15 @@ complete -o default -F __start_kubectl k
 # kubectl 
 
 https://gist.githubusercontent.com/rothgar/a2092f73b06465ddda0e855cc1f6ec2b/raw/3dde648fc2ff8ad08a8cf15308950caa2dfeabc2/k8s.zsh
+
+# Terraform 
+```bash
+wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+terraform -install-autocomplete
+#vi ~/.bashrc
+complete -C /usr/bin/terraform terraform
+alias tf=terraform
+complete -C '/usr/bin/terraform' tf
+```
