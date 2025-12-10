@@ -107,6 +107,7 @@ sudo mv ./kind /usr/local/bin/kind
 kind create cluster
 kubectl get nodes
 alias k=kubectl
+source /etc/bash_completion
 source <(kubectl completion bash)
 echo "source <(kubectl completion bash)" >>~/.bashrc
 complete -o default -F __start_kubectl k
