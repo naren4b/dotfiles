@@ -5,7 +5,7 @@ To verify Terraform is really using the intended AWS profile, combine an explici
 EITHER via environment variable in your shell:
 
 ```bash
-export AWS_PROFILE=corporate   # or personal
+export AWS_PROFILE=personal   # or corporate
 export AWS_REGION=ap-south-1   # or your region
 ```
 
