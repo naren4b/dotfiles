@@ -73,6 +73,7 @@ Add a commit template file and point each Git profile (personal/corporate) at th
 
 ## 1. Create template files
 refer : https://www.conventionalcommits.org/en/v1.0.0/
+
 Example personal template, `~/.gitmessage-personal`:
 
 ```text
@@ -130,7 +131,7 @@ Update your existing identity-specific configs:
 
 [commit]
     template = ~/.gitmessage-corporate
-    
+
 [credential]    
     helper = store --file ~/.git-credentials-personal        
 ```
