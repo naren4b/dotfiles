@@ -72,7 +72,7 @@ git config user.email
 Add a commit template file and point each Git profile (personal/corporate) at the appropriate template.
 
 ## 1. Create template files
-
+refer : https://www.conventionalcommits.org/en/v1.0.0/
 Example personal template, `~/.gitmessage-personal`:
 
 ```text
@@ -116,6 +116,9 @@ Update your existing identity-specific configs:
 
 [commit]
     template = ~/.gitmessage-personal
+
+[credential]    
+    helper = store --file ~/.git-credentials-personal    
 ```
 
 `~/.gitconfig-corporate`:
@@ -127,6 +130,9 @@ Update your existing identity-specific configs:
 
 [commit]
     template = ~/.gitmessage-corporate
+    
+[credential]    
+    helper = store --file ~/.git-credentials-personal        
 ```
 
 Now the same `includeIf` rules you already have for personal/corporate directories will automatically select both the correct identity and the correct commit template.[4][5][6]
