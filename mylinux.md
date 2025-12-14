@@ -40,6 +40,16 @@ echo 'alias c=clear' >>~/.bashrc
 echo 'complete -F __start_kubectl k' >>~/.bashrc
 sed -i '1s/^/force_color_prompt=yes\n/' ~/.bashrc
 source ~/.bashrc
+export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[33m\]$(__git_ps1 " (%s)")\[\033[00m\] \$ '
+```
+# Set my Prompt 
+Add this to the `~/.bashrc`
+
+```
+export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[33m\]$(__git_ps1 " (%s)")\[\033[00m\] \$ '
+
+```
+
 ```
 # aws cli
 ```bash
