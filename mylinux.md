@@ -54,23 +54,16 @@ export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[33m\]$(__gi
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-
 sudo apt install build-essential software-properties-common -y
-
 sudo add-apt-repository ppa:deadsnakes/ppa
-
 sudo apt update -y
-
 sudo apt install python3 -y
-
 sudo apt install -y python-is-python3
-
 python --version
 
 # Creates the virtual environment and creates the directory '.venv'
 # pyvenv.cfg file inside your .venv folder and change the line `include-system-site-packages = false` to `true`. 
 # pip cache dir
-
 python -m venv .venv --system-site-packages
 source .venv/bin/activate
 
@@ -80,6 +73,15 @@ python app.py
 pip install ruff 
 # ruff format <filename>
 ```
+# Install Go
+```
+VERSION=1.25.5 # https://go.dev/doc/install
+wget https://go.dev/dl/go1.25.5.linux-amd64.tar.gz
+tar -C /usr/local -xzf go1.25.5.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+go 
+```
+
 # aws cli
 ```bash
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -166,3 +168,26 @@ complete -C /usr/bin/terraform terraform
 alias tf=terraform
 complete -C '/usr/bin/terraform' tf
 ```
+
+# ArgoCD
+```
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+
+kind create cluster
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+nohup kubectl port-forward svc/argocd-server -n argocd 8080:443 --address 0.0.0.0 & 
+argocd login localhost:8080 --username admin --password $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo) --insecure
+
+# DIY Deploy the application 
+argocd app create helm-guestbook \
+    --repo https://github.com/argoproj/argocd-example-apps.git \
+    --path helm-guestbook \
+    --dest-namespace default \
+    --dest-server https://kubernetes.default.svc 
+
+argocd app sync guestbook --dry-run 
+```
+
