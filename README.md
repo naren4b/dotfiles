@@ -61,6 +61,9 @@ sudo apt install python3 -y
 sudo apt install -y python-is-python3
 python --version
 
+python3 --version
+alias python=python3
+
 # Creates the virtual environment and creates the directory '.venv'
 # pyvenv.cfg file inside your .venv folder and change the line `include-system-site-packages = false` to `true`. 
 # pip cache dir
@@ -133,8 +136,7 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scrip
 chmod 700 get_helm.sh
 ./get_helm.sh
 
-python3 --version
-alias python=python3
+
 ```
 
 # Kind Cluster
