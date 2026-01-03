@@ -192,4 +192,108 @@ argocd app create helm-guestbook \
 
 argocd app sync guestbook --dry-run 
 ```
+# My Bashrc
+```bash
 
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# Cleaned up and restructured for clarity and efficiency
+
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+# History settings
+HISTCONTROL=ignoredups:ignorespace
+shopt -s histappend
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# Window size check
+shopt -s checkwinsize
+
+# Lesspipe for non-text input files
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# Chroot prompt
+if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# Prompt settings
+case "$TERM" in
+    xterm-color) color_prompt=yes;;
+esac
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+        color_prompt=yes
+    else
+        color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+# Xterm window title
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# Color support and aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Load user aliases
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# Programmable completion
+source /etc/bash_completion
+
+# PATH settings (consolidated)
+export PATH="/usr/local/go/bin:/usr/local/bin:/usr/local:$HOME/bin:/root/.local/bin:$PATH"
+
+# Proxy settings
+export HTTPS_PROXY=<>
+export HTTP_PROXY=<>
+
+# SSL cert settings
+export SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
+export REQUESTS_CA_BUNDLE="/etc/ssl/certs/ca-certificates.crt"
+
+# Kubectl and Terraform completions/aliases
+source <(kubectl completion bash)
+alias k=kubectl
+complete -F __start_kubectl k
+
+alias c=clear
+
+complete -C /usr/bin/terraform terraform
+alias tf=terraform
+complete -C /usr/bin/terraform tf
+
+# AWS profile aliases
+alias awswork='export AWS_PROFILE=work && aws sts get-caller-identity'
+alias awspers='export AWS_PROFILE=personal && aws sts get-caller-identity'
+alias aws-whoami='aws sts get-caller-identity'
+
+# Git-enhanced prompt
+export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[33m\]$(__git_ps1 " (%s)")\[\033[00m\] \$ \n \[\033[01;32m\]>\[\033[00m\]'
+```
