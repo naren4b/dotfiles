@@ -1,3 +1,9 @@
+# WSL
+```bash
+wsl --update
+wsl 
+
+```
 # Guest OS
 ```bash
 apt-get update -y
@@ -27,17 +33,13 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub root@127.0.1.1
 
 # Utility Software
 ```bash
-apt-get install git curl vim python3-pip yq tree openssh-client openssh-server docker.io
+apt-get install git curl vim python3-pip yq tree openssh-client openssh-server docker.io unzip
 apt-get --allow-unauthenticated update
 apt-get --allow-unauthenticated install -y bash-completion binutils
 echo 'colorscheme ron' >>~/.vimrc
 echo 'set tabstop=2' >>~/.vimrc
 echo 'set shiftwidth=2' >>~/.vimrc
 echo 'set expandtab' >>~/.vimrc
-echo 'source <(kubectl completion bash)' >>~/.bashrc
-echo 'alias k=kubectl' >>~/.bashrc
-echo 'alias c=clear' >>~/.bashrc
-echo 'complete -F __start_kubectl k' >>~/.bashrc
 sed -i '1s/^/force_color_prompt=yes\n/' ~/.bashrc
 source ~/.bashrc
 export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[33m\]$(__git_ps1 " (%s)")\[\033[00m\] \$ '
@@ -63,7 +65,10 @@ python --version
 
 python3 --version
 alias python=python3
-
+sudo apt install python3-pip
+```
+# Python sample
+```bash
 # Creates the virtual environment and creates the directory '.venv'
 # pyvenv.cfg file inside your .venv folder and change the line `include-system-site-packages = false` to `true`. 
 # pip cache dir
@@ -78,23 +83,17 @@ pip install ruff
 ```
 # Install Go
 ```
-VERSION=1.25.5 # https://go.dev/doc/install
-wget https://go.dev/dl/go1.25.5.linux-amd64.tar.gz
-tar -C /usr/local -xzf go1.25.5.linux-amd64.tar.gz
-export PATH=$PATH:/usr/local/go/bin
-go 
+sudo apt install golang-go
+
+# VERSION=1.25.5 # https://go.dev/doc/install
+# wget https://go.dev/dl/go1.25.5.linux-amd64.tar.gz
+# tar -C /usr/local -xzf go1.25.5.linux-amd64.tar.gz
+# export PATH=$PATH:/usr/local/go/bin
+go version
 ```
 
-# aws cli
-```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-aws --version
-```
 # kubectl
 ```bash
-
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 # For AWS kubectl  https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html#kubectl-install-update
 # curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.34.2/2025-11-13/bin/darwin/amd64/kubectl
@@ -108,6 +107,11 @@ sudo apt install fzf
 sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
 sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
 sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+echo 'source <(kubectl completion bash)' >>~/.bashrc
+echo 'alias k=kubectl' >>~/.bashrc
+echo 'alias c=clear' >>~/.bashrc
+echo 'complete -F __start_kubectl k' >>~/.bashrc
+source ~/.bashrc
 ```
 # plugins
 ```bash
@@ -138,15 +142,19 @@ chmod 700 get_helm.sh
 
 
 ```
-
+#PODMAN
+```bash
+sudo apt install -y podman
+```
 # Kind Cluster
 ```bash
+
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
 [ $(uname -m) = aarch64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-arm64
 chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
 
-
+# export KIND_EXPERIMENTAL_PROVIDER=podman
 kind create cluster
 kubectl get nodes
 alias k=kubectl
@@ -159,16 +167,91 @@ complete -o default -F __start_kubectl k
 
 https://gist.githubusercontent.com/rothgar/a2092f73b06465ddda0e855cc1f6ec2b/raw/3dde648fc2ff8ad08a8cf15308950caa2dfeabc2/k8s.zsh
 
-# Terraform 
+# Install AWS 
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+
+```
+# Install OpenTofu
+```bash
+# Download the installer script:
+curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh
+# Alternatively: wget --secure-protocol=TLSv1_2 --https-only https://get.opentofu.org/install-opentofu.sh -O install-opentofu.sh
+
+# Grant execution permissions:
+chmod +x install-opentofu.sh
+
+# Please inspect the downloaded script at this point.
+
+# Run the installer:
+./install-opentofu.sh --install-method standalone  --skip-verify
+
+# Remove the installer:
+rm -f install-opentofu.sh
+
+tofu -version
+#https://opentofu.org/docs/intro/install/
+```
+# Install Terragrunt
+```bash
+curl -sL https://docs.terragrunt.com/install | bash
+#https://docs.terragrunt.com/getting-started/install/
+```
+# Install Terraform 
 ```bash
 wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
 sudo apt update && sudo apt install terraform
+```
+## Setup Auto Complete (optional)
+```bash
 terraform -install-autocomplete
-#vi ~/.bashrc
+
+cat<<EOF >> ~/.bashrc
 complete -C /usr/bin/terraform terraform
 alias tf=terraform
 complete -C '/usr/bin/terraform' tf
+EOF
+source ~/.bashrc
+```
+# Configure the AWS profile 
+```bash
+cat<<EOF >> ~/.aws/config
+[profile work]
+region = us-east-1
+output = json
+
+[profile personal]
+region = us-west-2
+output = json
+
+EOF
+```
+# Configure the AWS profile 
+```bash
+cat<<EOF >>~/.aws/credentials
+[work]
+aws_access_key_id = WORK_ACCESS_KEY
+aws_secret_access_key = WORK_SECRET_KEY
+
+[personal]
+aws_access_key_id = PERSONAL_ACCESS_KEY
+aws_secret_access_key = PERSONAL_SECRET_KEY
+EOF
+```
+# AWS Profile Aliases
+```bash
+cat<<EOF >> ~/.bashrc
+alias awswork='export AWS_PROFILE=work'
+alias awspers='export AWS_PROFILE=personal'
+alias aws-whoami='aws sts get-caller-identity'
+EOF
+source ~/.bashrc
+
 ```
 
 # ArgoCD
