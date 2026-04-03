@@ -66,6 +66,8 @@ python --version
 python3 --version
 alias python=python3
 sudo apt install python3-pip
+pip list
+#https://youtu.be/hK-fZhh4v8I
 ```
 # Python sample
 ```bash
