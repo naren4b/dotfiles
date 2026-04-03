@@ -33,7 +33,7 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub root@127.0.1.1
 
 # Utility Software
 ```bash
-apt-get install git curl vim python3-pip yq tree openssh-client openssh-server docker.io unzip
+apt-get install git curl vim python3-pip yq tree openssh-client openssh-server docker.io unzip net-tools
 apt-get --allow-unauthenticated update
 apt-get --allow-unauthenticated install -y bash-completion binutils
 echo 'colorscheme ron' >>~/.vimrc
