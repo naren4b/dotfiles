@@ -11,6 +11,51 @@ findmnt
 /media/nabh/VBox_GAs_7.0.12/VBoxLinuxAdditions.run
 reboot
 ```
+# Git
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main
+git config --global core.editor "vi"
+
+
+# for Linux
+git config --global credential.helper cache
+git config --global credential.helper store
+git config --global core.autocrlf input
+
+# For Windows
+git config --global credential.helper manager 
+git config --global credential.helper manager-core
+git config --global core.autocrlf true
+
+git config --list --show-origin
+#Shortcuts
+# Status:
+git config --global alias.st status
+# Runs:
+git st
+#Checkout:
+git config --global alias.co checkout
+# Runs:
+git co
+# Commit:
+git config --global alias.ci commit
+#Runs:
+git ci
+
+# Branch:
+git config --global alias.br branch
+#Runs:
+git br
+
+# To stay updated without messy merge commits:
+git pull --rebase
+# Accept "Theirs" for Everything
+git checkout --theirs .
+
+
+```
 # Install docker 
 ```bash
 apt-get install docker.io
