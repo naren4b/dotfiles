@@ -1,7 +1,10 @@
 # WSL
 ```bash
 wsl --update
-wsl 
+wsl
+# For docker setup
+sudo usermod -aG docker $USER
+sudo chmod 666 /var/run/docker.sock
 
 ```
 # Guest OS
