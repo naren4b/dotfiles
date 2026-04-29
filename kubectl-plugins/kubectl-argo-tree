@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""kubectl-argo-tree — Show full ArgoCD application hierarchy as a tree.
+
+Usage:
+  kubectl argo tree <app-name> [flags]
+
+Flags:
+  -n, --namespace NAMESPACE  ArgoCD namespace (default: argocd)
+  --no-color                 Disable colored output
+
+How it works:
+  1. Fetches all Application resources from the ArgoCD namespace.
+  2. Determines each app's parent from:
+       - argocd.argoproj.io/tracking-id annotation  (<parent>:<group>/<kind>:<ns>/<name>)
+       - app.kubernetes.io/instance label            (fallback)
+  3. Walks up from the given app to find the hierarchy root.
+  4. Prints the full subtree from root, highlighting the target app (★).
+
+Installation:
+  chmod +x kubectl-argo-tree
+  sudo cp kubectl-argo-tree /usr/local/bin/kubectl-argo-tree
+  # Then use: kubectl argo tree <app-name>
+"""
+
+import argparse
+import json
+import subprocess
+import sys
+
+# ---------------------------------------------------------------------------
+# ANSI helpers
+# ---------------------------------------------------------------------------
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+CYAN = "\033[36m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+RED = "\033[31m"
+
+_use_color = True
+
+
+def _c(text, *codes):
+    """Wrap text in ANSI codes if color is enabled."""
+    if not _use_color:
+        return text
+    return "".join(codes) + text + RESET
+
+
+# ---------------------------------------------------------------------------
+# Kubernetes / ArgoCD helpers
+# ---------------------------------------------------------------------------
+
+
+def fetch_all_apps(namespace: str) -> list:
+    """Return list of Application dicts from the cluster."""
+    try:
+        result = subprocess.run(
+            [
+                "kubectl",
+                "get",
+                "applications.argoproj.io",
+                "-n",
+                namespace,
+                "-o",
+                "json",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except FileNotFoundError:
+        print("error: 'kubectl' not found in PATH", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"error: kubectl failed: {e.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+    return json.loads(result.stdout).get("items", [])
+
+
+def parent_from_tracking_id(tracking_id: str) -> str | None:
+    """Extract parent app name from argocd.argoproj.io/tracking-id.
+
+    Format: <parent-app>:<group>/<kind>:<namespace>/<name>
+    Example: ndac-paas-ms-applications-p-dev:argoproj.io/Application:argocd/abac-p-dev
+             => 'ndac-paas-ms-applications-p-dev'
+    """
+    if not tracking_id:
+        return None
+    parent = tracking_id.split(":")[0].strip()
+    return parent or None
+
+
+def build_index(apps: list) -> tuple[dict, dict, dict]:
+    """Build lookup structures from a list of Application objects.
+
+    Returns:
+        app_map      – name -> app dict
+        parent_map   – child name -> parent name
+        children_map – parent name -> sorted list of child names
+    """
+    app_map: dict = {a["metadata"]["name"]: a for a in apps}
+    parent_map: dict = {}
+    children_map: dict = {name: [] for name in app_map}
+
+    for app in apps:
+        name = app["metadata"]["name"]
+        annotations = app["metadata"].get("annotations", {})
+        labels = app["metadata"].get("labels", {})
+
+        # Primary: tracking-id annotation (most reliable)
+        parent = parent_from_tracking_id(
+            annotations.get("argocd.argoproj.io/tracking-id", "")
+        )
+
+        # Fallback: instance label
+        if not parent or parent == name:
+            parent = labels.get("app.kubernetes.io/instance")
+
+        if parent and parent != name:
+            parent_map[name] = parent
+            children_map.setdefault(parent, [])
+            if name not in children_map[parent]:
+                children_map[parent].append(name)
+
+    # Sort children lists for stable output
+    for key in children_map:
+        children_map[key].sort()
+
+    return app_map, parent_map, children_map
+
+
+def find_root(name: str, parent_map: dict) -> str:
+    """Walk parent_map upward from 'name' until reaching a node with no parent."""
+    visited: set = set()
+    while name in parent_map:
+        if name in visited:
+            # Cycle guard — treat current node as root
+            break
+        visited.add(name)
+        name = parent_map[name]
+    return name
+
+
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+
+
+def _sync_colored(status: str) -> str:
+    mapping = {"Synced": GREEN, "OutOfSync": YELLOW}
+    return _c(status, mapping.get(status, DIM))
+
+
+def _health_colored(status: str) -> str:
+    mapping = {"Healthy": GREEN, "Degraded": RED, "Progressing": YELLOW, "Missing": RED}
+    return _c(status, mapping.get(status, DIM))
+
+
+def format_node(name: str, app: dict | None, is_target: bool) -> str:
+    """Return a formatted label string for a single tree node."""
+    if app:
+        labels = app["metadata"].get("labels", {})
+        level = labels.get("app-level", "")
+        status_obj = app.get("status", {})
+        sync = status_obj.get("sync", {}).get("status", "Unknown")
+        health = status_obj.get("health", {}).get("status", "Unknown")
+
+        level_tag = _c(f" ({level})", DIM) if level else ""
+        status_tag = f"  {_sync_colored(sync)}/{_health_colored(health)}"
+    else:
+        level_tag = ""
+        status_tag = _c("  [not in cluster]", DIM)
+
+    if is_target:
+        display = _c(f"★ {name}", BOLD + CYAN)
+    else:
+        display = name
+
+    return f"{display}{level_tag}{status_tag}"
+
+
+# ---------------------------------------------------------------------------
+# Tree rendering (recursive)
+# ---------------------------------------------------------------------------
+
+
+def render_tree(
+    name: str,
+    app_map: dict,
+    children_map: dict,
+    target: str,
+    prefix: str = "",
+    is_last: bool = True,
+):
+    connector = "└── " if is_last else "├── "
+    line = format_node(name, app_map.get(name), name == target)
+    print(f"{prefix}{connector}{line}")
+
+    child_prefix = prefix + ("    " if is_last else "│   ")
+    kids = children_map.get(name, [])
+    for i, child in enumerate(kids):
+        render_tree(
+            child, app_map, children_map, target, child_prefix, i == len(kids) - 1
+        )
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+
+def main():
+    global _use_color
+
+    parser = argparse.ArgumentParser(
+        prog="kubectl-argo-tree",
+        description="Show the full ArgoCD application hierarchy as a tree.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("app_name", help="Target ArgoCD application name")
+    parser.add_argument(
+        "-n",
+        "--namespace",
+        default="argocd",
+        metavar="NAMESPACE",
+        help="Namespace where ArgoCD Applications live (default: argocd)",
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output",
+    )
+    args = parser.parse_args()
+
+    if args.no_color or not sys.stdout.isatty():
+        _use_color = False
+
+    # Fetch and index
+    apps = fetch_all_apps(args.namespace)
+    app_map, parent_map, children_map = build_index(apps)
+
+    if args.app_name not in app_map:
+        print(
+            f"error: application '{args.app_name}' not found in namespace '{args.namespace}'",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Walk up to the root of the hierarchy
+    root = find_root(args.app_name, parent_map)
+
+    # Header
+    header = f"ArgoCD App Tree  (namespace: {args.namespace}  target: {args.app_name})"
+    print(_c(header, BOLD))
+    print()
+
+    # Print the root node (no tree connector)
+    root_line = format_node(root, app_map.get(root), root == args.app_name)
+    print(root_line)
+
+    # Recursively print children
+    kids = children_map.get(root, [])
+    for i, child in enumerate(kids):
+        render_tree(child, app_map, children_map, args.app_name, "", i == len(kids) - 1)
+
+    print()
+
+
+if __name__ == "__main__":
+    main()
