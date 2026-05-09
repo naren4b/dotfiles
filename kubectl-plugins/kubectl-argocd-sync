@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# kubectl-argocd-sync — Enable or disable automated sync for ArgoCD applications by label.
+#
+# Usage:
+#   kubectl argocd-sync <on|off> -l <label-selector> [flags]
+#
+# Subcommands:
+#   on   Enable automated sync  (adds /spec/syncPolicy/automated: {})
+#   off  Disable automated sync (removes /spec/syncPolicy/automated)
+#
+# Flags:
+#   -l, --selector SELECTOR    Label selector (e.g. env=production)
+#   -n, --namespace NAMESPACE  ArgoCD namespace (default: argocd)
+#   --dry-run                  Print matching applications without patching
+#   -h, --help                 Show this help message
+#
+# Examples:
+#   kubectl argocd-sync off -l env=production
+#   kubectl argocd-sync on  -l team=backend -n argocd
+#   kubectl argocd-sync off -l env=staging --dry-run
+#
+# Installation:
+#   chmod +x kubectl-argocd-sync
+#   sudo cp kubectl-argocd-sync /usr/local/bin/kubectl-argocd-sync
+#   # Then use: kubectl argocd-sync <on|off> -l <label-selector>
+
+set -euo pipefail
+
+NAMESPACE="argocd"
+DRY_RUN=false
+SELECTOR=""
+SUBCOMMAND=""
+
+usage() {
+  cat <<EOF
+Usage: kubectl argocd-sync <on|off> -l <label-selector> [flags]
+
+Subcommands:
+  on   Enable automated sync  (adds /spec/syncPolicy/automated: {})
+  off  Disable automated sync (removes /spec/syncPolicy/automated)
+
+Flags:
+  -l, --selector SELECTOR    Label selector (e.g. env=production)
+  -n, --namespace NAMESPACE  ArgoCD namespace (default: argocd)
+  --dry-run                  Print matching applications without patching
+  -h, --help                 Show this help message
+
+Examples:
+  kubectl argocd-sync off -l env=production
+  kubectl argocd-sync on  -l team=backend -n argocd
+  kubectl argocd-sync off -l env=staging --dry-run
+EOF
+}
+
+if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+SUBCOMMAND="$1"
+shift
+
+if [[ "${SUBCOMMAND}" != "on" && "${SUBCOMMAND}" != "off" ]]; then
+  echo "Error: unknown subcommand '${SUBCOMMAND}'. Expected 'on' or 'off'." >&2
+  usage >&2
+  exit 1
+fi
+
+# Parse flags
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -l|--selector)
+      SELECTOR="$2"
+      shift 2
+      ;;
+    -n|--namespace)
+      NAMESPACE="$2"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    *)
+      echo "Error: Unknown flag: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z "${SELECTOR}" ]]; then
+  echo "Error: -l/--selector is required." >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ "${SUBCOMMAND}" == "off" ]]; then
+  PATCH='[{"op": "remove", "path": "/spec/syncPolicy/automated"}]'
+  ACTION="Disabling"
+  DONE_MSG="Automated sync disabled"
+else
+  PATCH='[{"op": "add", "path": "/spec/syncPolicy/automated", "value": {}}]'
+  ACTION="Enabling"
+  DONE_MSG="Automated sync enabled"
+fi
+
+echo "Searching for ArgoCD applications with label '${SELECTOR}' in namespace '${NAMESPACE}'..."
+
+mapfile -t APPS < <(
+  kubectl get applications.argoproj.io \
+    -l "${SELECTOR}" \
+    -n "${NAMESPACE}" \
+    --no-headers \
+    -o custom-columns="NAME:.metadata.name" 2>/dev/null
+)
+
+if [[ ${#APPS[@]} -eq 0 ]]; then
+  echo "No applications found matching label '${SELECTOR}' in namespace '${NAMESPACE}'."
+  exit 0
+fi
+
+echo "Found ${#APPS[@]} application(s):"
+for app in "${APPS[@]}"; do
+  echo "  - ${app}"
+done
+
+if [[ "${DRY_RUN}" == "true" ]]; then
+  echo ""
+  echo "[dry-run] No changes applied."
+  exit 0
+fi
+
+echo ""
+echo "${ACTION} automated sync..."
+
+FAILED=()
+for app in "${APPS[@]}"; do
+  if kubectl patch applications.argoproj.io "${app}" \
+      -n "${NAMESPACE}" \
+      --type='json' \
+      -p="${PATCH}" \
+      > /dev/null 2>&1; then
+    echo "  [ok] ${app}"
+  else
+    echo "  [skip] ${app} — patch failed (policy may already be in desired state)"
+    FAILED+=("${app}")
+  fi
+done
+
+echo ""
+if [[ ${#FAILED[@]} -eq 0 ]]; then
+  echo "Done. ${DONE_MSG} for ${#APPS[@]} application(s)."
+else
+  SUCCEEDED=$(( ${#APPS[@]} - ${#FAILED[@]} ))
+  echo "Done. Patched ${SUCCEEDED}/${#APPS[@]} application(s). ${#FAILED[@]} skipped."
+fi
