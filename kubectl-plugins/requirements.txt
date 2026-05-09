@@ -1,0 +1,7 @@
+# kubectl-argocd-tree and kubectl-argocd-sync
+#
+# Both plugins use only the Python standard library:
+#   argparse, json, subprocess, sys
+#
+# No third-party packages are required.
+# Python >= 3.10 is needed for the `X | Y` union type syntax used in type hints.

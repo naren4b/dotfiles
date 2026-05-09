@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""kubectl-argo-tree — Show full ArgoCD application hierarchy as a tree.
+"""kubectl-argocd-tree — Show full ArgoCD application hierarchy as a tree.
 
 Usage:
-  kubectl argo tree <app-name> [flags]
+  kubectl argocd tree [app-name] [flags]
 
 Flags:
   -n, --namespace NAMESPACE  ArgoCD namespace (default: argocd)
@@ -13,13 +13,14 @@ How it works:
   2. Determines each app's parent from:
        - argocd.argoproj.io/tracking-id annotation  (<parent>:<group>/<kind>:<ns>/<name>)
        - app.kubernetes.io/instance label            (fallback)
-  3. Walks up from the given app to find the hierarchy root.
-  4. Prints the full subtree from root, highlighting the target app (★).
+  3. If app-name is given: walks up to the hierarchy root and prints the full
+     subtree, highlighting the target app (★).
+  4. If app-name is omitted: prints trees for every root application in the namespace.
 
 Installation:
-  chmod +x kubectl-argo-tree
-  sudo cp kubectl-argo-tree /usr/local/bin/kubectl-argo-tree
-  # Then use: kubectl argo tree <app-name>
+  chmod +x kubectl-argocd-tree
+  sudo cp kubectl-argocd-tree /usr/local/bin/kubectl-argocd-tree
+  # Then use: kubectl argocd tree <app-name>
 """
 
 import argparse
@@ -215,11 +216,16 @@ def main():
     global _use_color
 
     parser = argparse.ArgumentParser(
-        prog="kubectl-argo-tree",
+        prog="kubectl-argocd-tree",
         description="Show the full ArgoCD application hierarchy as a tree.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("app_name", help="Target ArgoCD application name")
+    parser.add_argument(
+        "app_name",
+        nargs="?",
+        default=None,
+        help="Target ArgoCD application name (omit to show all trees)",
+    )
     parser.add_argument(
         "-n",
         "--namespace",
@@ -241,31 +247,55 @@ def main():
     apps = fetch_all_apps(args.namespace)
     app_map, parent_map, children_map = build_index(apps)
 
-    if args.app_name not in app_map:
-        print(
-            f"error: application '{args.app_name}' not found in namespace '{args.namespace}'",
-            file=sys.stderr,
+    if args.app_name is None:
+        # Show trees for all root applications
+        roots = sorted(name for name in app_map if name not in parent_map)
+        if not roots:
+            print(
+                "No applications found in namespace '{args.namespace}'.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        header = f"ArgoCD App Trees  (namespace: {args.namespace}  roots: {len(roots)})"
+        print(_c(header, BOLD))
+        for idx, root in enumerate(roots):
+            print()
+            root_line = format_node(root, app_map.get(root), False)
+            print(root_line)
+            kids = children_map.get(root, [])
+            for i, child in enumerate(kids):
+                render_tree(child, app_map, children_map, "", "", i == len(kids) - 1)
+        print()
+    else:
+        if args.app_name not in app_map:
+            print(
+                f"error: application '{args.app_name}' not found in namespace '{args.namespace}'",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        # Walk up to the root of the hierarchy
+        root = find_root(args.app_name, parent_map)
+
+        # Header
+        header = (
+            f"ArgoCD App Tree  (namespace: {args.namespace}  target: {args.app_name})"
         )
-        sys.exit(1)
+        print(_c(header, BOLD))
+        print()
 
-    # Walk up to the root of the hierarchy
-    root = find_root(args.app_name, parent_map)
+        # Print the root node (no tree connector)
+        root_line = format_node(root, app_map.get(root), root == args.app_name)
+        print(root_line)
 
-    # Header
-    header = f"ArgoCD App Tree  (namespace: {args.namespace}  target: {args.app_name})"
-    print(_c(header, BOLD))
-    print()
+        # Recursively print children
+        kids = children_map.get(root, [])
+        for i, child in enumerate(kids):
+            render_tree(
+                child, app_map, children_map, args.app_name, "", i == len(kids) - 1
+            )
 
-    # Print the root node (no tree connector)
-    root_line = format_node(root, app_map.get(root), root == args.app_name)
-    print(root_line)
-
-    # Recursively print children
-    kids = children_map.get(root, [])
-    for i, child in enumerate(kids):
-        render_tree(child, app_map, children_map, args.app_name, "", i == len(kids) - 1)
-
-    print()
+        print()
 
 
 if __name__ == "__main__":

@@ -1,161 +1,413 @@
-#!/usr/bin/env bash
-# kubectl-argocd-sync — Enable or disable automated sync for ArgoCD applications by label.
-#
-# Usage:
-#   kubectl argocd-sync <on|off> -l <label-selector> [flags]
-#
-# Subcommands:
-#   on   Enable automated sync  (adds /spec/syncPolicy/automated: {})
-#   off  Disable automated sync (removes /spec/syncPolicy/automated)
-#
-# Flags:
-#   -l, --selector SELECTOR    Label selector (e.g. env=production)
-#   -n, --namespace NAMESPACE  ArgoCD namespace (default: argocd)
-#   --dry-run                  Print matching applications without patching
-#   -h, --help                 Show this help message
-#
-# Examples:
-#   kubectl argocd-sync off -l env=production
-#   kubectl argocd-sync on  -l team=backend -n argocd
-#   kubectl argocd-sync off -l env=staging --dry-run
-#
-# Installation:
-#   chmod +x kubectl-argocd-sync
-#   sudo cp kubectl-argocd-sync /usr/local/bin/kubectl-argocd-sync
-#   # Then use: kubectl argocd-sync <on|off> -l <label-selector>
+#!/usr/bin/env python3
+"""kubectl-argocd-sync — Enable, disable, or show automated sync for ArgoCD applications.
 
-set -euo pipefail
-
-NAMESPACE="argocd"
-DRY_RUN=false
-SELECTOR=""
-SUBCOMMAND=""
-
-usage() {
-  cat <<EOF
-Usage: kubectl argocd-sync <on|off> -l <label-selector> [flags]
+Usage:
+  kubectl argocd-sync [show] [app-name]            [flags]
+  kubectl argocd-sync  on|off  app-name            [flags]
+  kubectl argocd-sync  on|off -l <label-selector>  [flags]
 
 Subcommands:
-  on   Enable automated sync  (adds /spec/syncPolicy/automated: {})
-  off  Disable automated sync (removes /spec/syncPolicy/automated)
+  show  Show sync policy as a tree (default when no subcommand given)
+  on    Enable automated sync  (prune: true, selfHeal: true)
+  off   Disable automated sync
 
 Flags:
   -l, --selector SELECTOR    Label selector (e.g. env=production)
   -n, --namespace NAMESPACE  ArgoCD namespace (default: argocd)
-  --dry-run                  Print matching applications without patching
-  -h, --help                 Show this help message
+  --dry-run                  Print matching apps without patching (on/off only)
+  --no-color                 Disable colored output
 
 Examples:
-  kubectl argocd-sync off -l env=production
-  kubectl argocd-sync on  -l team=backend -n argocd
-  kubectl argocd-sync off -l env=staging --dry-run
-EOF
-}
+  kubectl argocd-sync
+  kubectl argocd-sync show my-app
+  kubectl argocd-sync on   my-app
+  kubectl argocd-sync off  -l env=production
+  kubectl argocd-sync on   -l team=backend -n argocd
+  kubectl argocd-sync off  my-app --dry-run
 
-if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" ]]; then
-  usage
-  exit 0
-fi
+Installation:
+  chmod +x kubectl-argocd-sync
+  sudo cp kubectl-argocd-sync /usr/local/bin/kubectl-argocd-sync
+"""
 
-SUBCOMMAND="$1"
-shift
+import argparse
+import json
+import subprocess
+import sys
 
-if [[ "${SUBCOMMAND}" != "on" && "${SUBCOMMAND}" != "off" ]]; then
-  echo "Error: unknown subcommand '${SUBCOMMAND}'. Expected 'on' or 'off'." >&2
-  usage >&2
-  exit 1
-fi
+# ---------------------------------------------------------------------------
+# ANSI helpers
+# ---------------------------------------------------------------------------
+RESET  = "\033[0m"
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+GREEN  = "\033[32m"
+YELLOW = "\033[33m"
+RED    = "\033[31m"
 
-# Parse flags
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    -l|--selector)
-      SELECTOR="$2"
-      shift 2
-      ;;
-    -n|--namespace)
-      NAMESPACE="$2"
-      shift 2
-      ;;
-    --dry-run)
-      DRY_RUN=true
-      shift
-      ;;
-    *)
-      echo "Error: Unknown flag: $1" >&2
-      usage >&2
-      exit 1
-      ;;
-  esac
-done
+_use_color = True
 
-if [[ -z "${SELECTOR}" ]]; then
-  echo "Error: -l/--selector is required." >&2
-  usage >&2
-  exit 1
-fi
 
-if [[ "${SUBCOMMAND}" == "off" ]]; then
-  PATCH='[{"op": "remove", "path": "/spec/syncPolicy/automated"}]'
-  ACTION="Disabling"
-  DONE_MSG="Automated sync disabled"
-else
-  PATCH='[{"op": "add", "path": "/spec/syncPolicy/automated", "value": {}}]'
-  ACTION="Enabling"
-  DONE_MSG="Automated sync enabled"
-fi
+def _c(text: str, *codes: str) -> str:
+    if not _use_color:
+        return text
+    return "".join(codes) + text + RESET
 
-echo "Searching for ArgoCD applications with label '${SELECTOR}' in namespace '${NAMESPACE}'..."
 
-mapfile -t APPS < <(
-  kubectl get applications.argoproj.io \
-    -l "${SELECTOR}" \
-    -n "${NAMESPACE}" \
-    --no-headers \
-    -o custom-columns="NAME:.metadata.name" 2>/dev/null
-)
+# ---------------------------------------------------------------------------
+# Kubernetes helpers
+# ---------------------------------------------------------------------------
 
-if [[ ${#APPS[@]} -eq 0 ]]; then
-  echo "No applications found matching label '${SELECTOR}' in namespace '${NAMESPACE}'."
-  exit 0
-fi
+def _kubectl(*args: str, check: bool = True) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(
+            ["kubectl", *args],
+            capture_output=True, text=True, check=check,
+        )
+    except FileNotFoundError:
+        print("error: 'kubectl' not found in PATH", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"error: kubectl failed: {e.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
 
-echo "Found ${#APPS[@]} application(s):"
-for app in "${APPS[@]}"; do
-  echo "  - ${app}"
-done
 
-if [[ "${DRY_RUN}" == "true" ]]; then
-  echo ""
-  echo "[dry-run] No changes applied."
-  exit 0
-fi
+def fetch_all_apps(namespace: str) -> list:
+    result = _kubectl("get", "applications.argoproj.io", "-n", namespace, "-o", "json")
+    return json.loads(result.stdout).get("items", [])
 
-echo ""
-echo "${ACTION} automated sync..."
 
-FAILED=()
-for app in "${APPS[@]}"; do
-  if kubectl patch applications.argoproj.io "${app}" \
-      -n "${NAMESPACE}" \
-      --type='json' \
-      -p="${PATCH}" \
-      > /dev/null 2>&1; then
-    echo "  [ok] ${app}"
-  else
-    echo "  [skip] ${app} — patch failed (policy may already be in desired state)"
-    FAILED+=("${app}")
-  fi
-done
+def fetch_apps_by_selector(namespace: str, selector: str) -> list:
+    result = _kubectl(
+        "get", "applications.argoproj.io",
+        "-n", namespace, "-l", selector, "-o", "json",
+    )
+    return json.loads(result.stdout).get("items", [])
 
-echo ""
-if [[ ${#FAILED[@]} -eq 0 ]]; then
-  echo "Done. ${DONE_MSG} for ${#APPS[@]} application(s)."
-else
-  SUCCEEDED=$(( ${#APPS[@]} - ${#FAILED[@]} ))
-  echo "Done. Patched ${SUCCEEDED}/${#APPS[@]} application(s). ${#FAILED[@]} skipped."
-fi
+
+def fetch_app(namespace: str, name: str) -> dict | None:
+    result = _kubectl(
+        "get", "applications.argoproj.io", name, "-n", namespace, "-o", "json",
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return json.loads(result.stdout)
+
+
+# ---------------------------------------------------------------------------
+# Index helpers
+# ---------------------------------------------------------------------------
+
+def _parent_from_tracking_id(tracking_id: str, self_name: str) -> str | None:
+    if not tracking_id:
+        return None
+    parent = tracking_id.split(":")[0].strip()
+    return parent if parent and parent != self_name else None
+
+
+def build_index(apps: list) -> tuple:
+    """Return (app_map, parent_map, children_map)."""
+    app_map: dict      = {a["metadata"]["name"]: a for a in apps}
+    parent_map: dict   = {}
+    children_map: dict = {name: [] for name in app_map}
+
+    for app in apps:
+        name        = app["metadata"]["name"]
+        annotations = app["metadata"].get("annotations", {})
+        labels      = app["metadata"].get("labels", {})
+
+        parent = _parent_from_tracking_id(
+            annotations.get("argocd.argoproj.io/tracking-id", ""), name
+        )
+        if not parent:
+            p = labels.get("app.kubernetes.io/instance", "")
+            parent = p if p and p != name else None
+
+        if parent:
+            parent_map[name] = parent
+            children_map.setdefault(parent, [])
+            if name not in children_map[parent]:
+                children_map[parent].append(name)
+
+    for key in children_map:
+        children_map[key].sort()
+
+    return app_map, parent_map, children_map
+
+
+# ---------------------------------------------------------------------------
+# Sync-status helpers
+# ---------------------------------------------------------------------------
+
+def sync_info(app: dict) -> tuple:
+    """Return (status, prune, selfheal) strings."""
+    automated = (app.get("spec") or {}).get("syncPolicy", {}).get("automated")
+    if automated is None:
+        return "disabled", "-", "-"
+    prune    = str(automated.get("prune",    False)).lower()
+    selfheal = str(automated.get("selfHeal", False)).lower()
+    return "enabled", prune, selfheal
+
+
+def _sync_colored(status: str) -> str:
+    return _c(status, GREEN if status == "enabled" else DIM)
+
+
+def _bool_colored(val: str) -> str:
+    if val == "-":
+        return _c(val, DIM)
+    return _c(val, GREEN if val == "true" else YELLOW)
+
+
+# ---------------------------------------------------------------------------
+# Table rendering
+# ---------------------------------------------------------------------------
+
+COL_APP  = 50
+COL_SYNC = 10
+COL_PRN  = 6
+
+
+def print_header():
+    header  = f"{'APPLICATION':<{COL_APP}}  {'AUTO-SYNC':<{COL_SYNC}}  {'PRUNE':<{COL_PRN}}  SELF-HEAL"
+    divider = f"{'-'*COL_APP}  {'-'*COL_SYNC}  {'-'*COL_PRN}  {'-'*9}"
+    print(_c(header, BOLD))
+    print(divider)
+
+
+def _row(label: str, status: str, prune: str, selfheal: str) -> str:
+    # len() counts chars not bytes, so Unicode connectors are handled correctly
+    pad      = max(0, COL_APP - len(label))
+    s_col    = _sync_colored(status)
+    p_col    = _bool_colored(prune)
+    sh_col   = _bool_colored(selfheal)
+    s_pad    = max(0, COL_SYNC - len(status))
+    p_pad    = max(0, COL_PRN  - len(prune))
+    return f"{label}{' ' * pad}  {s_col}{' ' * s_pad}  {p_col}{' ' * p_pad}  {sh_col}"
+
+
+# ---------------------------------------------------------------------------
+# Tree rendering for show
+# ---------------------------------------------------------------------------
+
+def render_show_tree(
+    name: str,
+    app_map: dict,
+    children_map: dict,
+    prefix: str = "",
+    is_last: bool = True,
+    is_root: bool = False,
+):
+    if is_root:
+        connector    = ""
+        child_prefix = ""
+    else:
+        connector    = "└── " if is_last else "├── "
+        child_prefix = prefix + ("    " if is_last else "│   ")
+
+    label = prefix + connector + name
+    app   = app_map.get(name)
+    status, prune, selfheal = sync_info(app) if app else ("disabled", "-", "-")
+    print(_row(label, status, prune, selfheal))
+
+    kids = children_map.get(name, [])
+    for i, child in enumerate(kids):
+        render_show_tree(child, app_map, children_map, child_prefix, i == len(kids) - 1)
+
+
+# ---------------------------------------------------------------------------
+# show subcommand
+# ---------------------------------------------------------------------------
+
+def cmd_show(args, apps: list):
+    app_map, parent_map, children_map = build_index(apps)
+    print_header()
+
+    if args.app_name:
+        # Walk up to find ancestor chain, print top-down
+        chain: list = []
+        current = args.app_name
+        visited: set = set()
+        while current in parent_map:
+            if current in visited:
+                break
+            visited.add(current)
+            current = parent_map[current]
+            chain.append(current)
+        chain.reverse()
+
+        depth = 0
+        for ancestor in chain:
+            indent = "  " * depth
+            app    = app_map.get(ancestor)
+            status, prune, selfheal = sync_info(app) if app else ("disabled", "-", "-")
+            print(_row(indent + ancestor, status, prune, selfheal))
+            depth += 1
+
+        indent = "  " * depth + "└─ "
+        app    = app_map.get(args.app_name)
+        status, prune, selfheal = sync_info(app) if app else ("disabled", "-", "-")
+        print(_row(indent + args.app_name, status, prune, selfheal))
+
+    else:
+        roots = sorted(n for n in app_map if n not in parent_map)
+        if not roots:
+            print("No applications found.")
+            return
+        for i, root in enumerate(roots):
+            if i:
+                print()
+            render_show_tree(root, app_map, children_map, is_root=True)
+
+
+# ---------------------------------------------------------------------------
+# on/off subcommands
+# ---------------------------------------------------------------------------
+
+def warn_parent_autosync(app_name: str, namespace: str, app_map: dict, parent_map: dict):
+    parent = parent_map.get(app_name)
+    if not parent:
+        return
+    parent_app = app_map.get(parent)
+    if not parent_app:
+        return
+    automated = (parent_app.get("spec") or {}).get("syncPolicy", {}).get("automated")
+    if automated is not None:
+        print(
+            f"  {_c('[warn]', YELLOW)} parent '{parent}' has auto-sync enabled"
+            f" — it will re-apply sync on '{app_name}'."
+        )
+        print(f"         Run: kubectl argocd-sync off -n {namespace} {parent}")
+
+
+def cmd_on_off(subcommand: str, args, apps: list):
+    app_map, parent_map, _ = build_index(apps)
+
+    print(f"Found {len(apps)} application(s):")
+    for app in apps:
+        print(f"  - {app['metadata']['name']}")
+
+    if args.dry_run:
+        print("\n[dry-run] No changes applied.")
+        return
+
+    if subcommand == "off":
+        patch    = '{"spec":{"syncPolicy":{"automated":null}}}'
+        action   = "Disabling"
+        done_msg = "Automated sync disabled"
+    else:
+        patch    = '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
+        action   = "Enabling"
+        done_msg = "Automated sync enabled (prune=true, selfHeal=true)"
+
+    print(f"\n{action} automated sync...")
+
+    failed = []
+    for app in apps:
+        name   = app["metadata"]["name"]
+        result = subprocess.run(
+            [
+                "kubectl", "patch", "applications.argoproj.io", name,
+                "-n", args.namespace,
+                "--type=merge",
+                f"-p={patch}",
+            ],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            print(f"  {_c('[ok]', GREEN)} {name}")
+            if subcommand == "off":
+                warn_parent_autosync(name, args.namespace, app_map, parent_map)
+        else:
+            print(f"  {_c('[skip]', DIM)} {name} — {result.stderr.strip()}")
+            if subcommand == "off":
+                warn_parent_autosync(name, args.namespace, app_map, parent_map)
+            failed.append(name)
+
+    print()
+    if not failed:
+        print(f"Done. {done_msg} for {len(apps)} application(s).")
+    else:
+        succeeded = len(apps) - len(failed)
+        print(f"Done. Patched {succeeded}/{len(apps)} application(s). {len(failed)} skipped.")
+
+
+# ---------------------------------------------------------------------------
+# Argument parsing & entry point
+# ---------------------------------------------------------------------------
+
+def main():
+    global _use_color
+
+    parser = argparse.ArgumentParser(
+        prog="kubectl-argocd-sync",
+        description="Enable, disable, or show automated sync for ArgoCD applications.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "subcommand",
+        nargs="?",
+        choices=["show", "on", "off"],
+        default="show",
+        help="Action to perform (default: show)",
+    )
+    parser.add_argument(
+        "app_name",
+        nargs="?",
+        default=None,
+        help="Target application name",
+    )
+    parser.add_argument("-l", "--selector", default="", metavar="SELECTOR",
+                        help="Label selector (e.g. env=production)")
+    parser.add_argument("-n", "--namespace", default="argocd", metavar="NAMESPACE",
+                        help="ArgoCD namespace (default: argocd)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print apps without patching (on/off only)")
+    parser.add_argument("--no-color", action="store_true",
+                        help="Disable colored output")
+    args = parser.parse_args()
+
+    if args.no_color or not sys.stdout.isatty():
+        _use_color = False
+
+    if args.app_name and args.selector:
+        parser.error("specify either an app name or -l/--selector, not both.")
+
+    if args.subcommand in ("on", "off") and not args.app_name and not args.selector:
+        parser.error("an app name or -l/--selector is required for on/off.")
+
+    # Fetch apps
+    if args.app_name:
+        app = fetch_app(args.namespace, args.app_name)
+        if app is None:
+            print(
+                f"error: application '{args.app_name}' not found"
+                f" in namespace '{args.namespace}'",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        # For show we need all apps to build the full ancestor chain
+        apps = fetch_all_apps(args.namespace) if args.subcommand == "show" else [app]
+    elif args.selector:
+        apps = fetch_apps_by_selector(args.namespace, args.selector)
+        if not apps:
+            print(
+                f"No applications found matching '{args.selector}'"
+                f" in namespace '{args.namespace}'."
+            )
+            sys.exit(0)
+    else:
+        apps = fetch_all_apps(args.namespace)
+        if not apps:
+            print(f"No applications found in namespace '{args.namespace}'.")
+            sys.exit(0)
+
+    if args.subcommand == "show":
+        cmd_show(args, apps)
+    else:
+        cmd_on_off(args.subcommand, args, apps)
+
+
+if __name__ == "__main__":
+    main()
