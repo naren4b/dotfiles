@@ -1,0 +1,7 @@
+# Machine-only. Copied to ~/.bashrc.local by install if missing.
+# Put secrets and host-specific env here — never commit.
+
+# export NOKIA_PASSWORD=
+# export HTTP_PROXY=
+# export HTTPS_PROXY=
+# . "$HOME/.local/bin/env"

@@ -1,0 +1,64 @@
+# Personal baseline manifest — versions and OS roles.
+# Company overlay is never installed from this file.
+
+schema_version: 1
+
+roles:
+  windows:
+    ide: true
+    agents: true
+    shell: true
+    toolchain: lite
+  ubuntu:
+    ide: false
+    agents: false
+    shell: true
+    toolchain: full
+
+windows:
+  apps:
+    - id: Git.Git
+      via: winget
+    - id: Microsoft.VisualStudioCode
+      via: winget
+    - id: Anysphere.Cursor
+      via: winget
+    - id: GitHub.cli
+      via: winget
+  clis:
+    - gh
+    - glab
+  agent_dirs:
+    - "%USERPROFILE%\\.cursor"
+    - "%USERPROFILE%\\.copilot\\skills"
+    - "%USERPROFILE%\\.claude"
+
+ubuntu:
+  apt:
+    - git
+    - curl
+    - vim
+    - unzip
+    - ca-certificates
+    - fzf
+    - bash-completion
+  tools:
+    - kubectl
+    - helm
+    - terraform
+    - tofu
+    - terragrunt
+    - aws
+    - starship
+    - docker
+    - gh
+    - glab
+
+company_untouched:
+  - ~/.bashrc.local
+  - ~/.gitconfig.local
+  - ~/.netrc
+  - ~/.ssh/
+  - ~/.kube/
+  - ~/.aws/credentials
+  - HTTP_PROXY / HTTPS_PROXY / SSL_CERT_FILE

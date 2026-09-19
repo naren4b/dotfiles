@@ -1,0 +1,17 @@
+[include]
+	path = ~/.gitconfig.local
+
+[alias]
+	st = status
+	co = checkout
+	ci = commit
+	br = branch
+
+[init]
+	defaultBranch = main
+
+[commit]
+	template = ~/.gitmessage
+
+[pull]
+	rebase = true

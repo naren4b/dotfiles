@@ -1,0 +1,10 @@
+*.local
+!*.local.example
+*.bak.*
+.DS_Store
+.env
+.env.*
+.netrc
+History/
+workspaceStorage/
+globalStorage/

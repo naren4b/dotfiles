@@ -1,0 +1,97 @@
+{
+    "window.autoDetectColorScheme": true,
+    "chat.instructionsFilesLocations": {
+        ".github/instructions": true,
+        ".claude/rules": true,
+        "~/.copilot/instructions": true,
+        "~/.claude/rules": true
+    },
+    "security.workspace.trust.untrustedFiles": "open",
+    "editor.minimap.enabled": false,
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "[terraform]": {
+        "editor.defaultFormatter": "hashicorp.terraform"
+    },
+    "[shellscript]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "editor.stickyScroll.enabled": false,
+    "files.autoSave": "afterDelay",
+    "terminal.integrated.defaultProfile.linux": "Ubuntu (Default)",
+    "makefile.configureOnOpen": true,
+    "terminal.integrated.defaultProfile.osx": "",
+    "chat.tools.terminal.terminalProfile.linux": {},
+    "git.autofetch": true,
+    "terminal.integrated.enableMultiLinePasteWarning": "never",
+    "explorer.confirmDelete": false,
+    "python.createEnvironment.trigger": "off",
+    "git.enableSmartCommit": true,
+    "terminal.integrated.copyOnSelection": true,
+    "terminal.integrated.rightClickBehavior": "paste",
+    "git.confirmSync": false,
+    "explorer.confirmDragAndDrop": false,
+    "terminal.explorerKind": "both",
+    "terminal.integrated.cursorBlinking": true,
+    "terminal.integrated.cursorStyle": "line",
+    "workbench.preferredLightColorTheme": "Night Owl",
+    "workbench.iconTheme": "vscode-icons",
+    "terminal.integrated.initialHint": false,
+    "vs-kubernetes": {
+        "vs-kubernetes.crd-code-completion": "disabled",
+        "vs-kubernetes.suppress-helm-not-found-alerts": true
+    },
+    "terminal.integrated.stickyScroll.enabled": false,
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        },
+        "Command Prompt": {
+            "path": [
+                "${env:windir}\\Sysnative\\cmd.exe",
+                "${env:windir}\\System32\\cmd.exe"
+            ],
+            "args": [],
+            "icon": "terminal-cmd"
+        },
+        "Git Bash": {
+            "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+            "args": [
+                "--login",
+                "-i"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "claudeCode.preferredLocation": "panel",
+    "workbench.startupEditor": "none",
+    "explorer.confirmPasteNative": false,
+    "github.copilot.chat.agentDebugLog.enabled": true,
+    "security.allowedUNCHosts": [
+        "wsl.localhost"
+    ],
+    "workbench.editorAssociations": {
+        "*.copilotmd": "vscode.markdown.preview.editor",
+        "*.docx": "docxreader.docxEditor",
+        "*.pdf": "default"
+    },
+    "chat.tools.terminal.autoApprove": {
+        "make": true
+    },
+    "chat.viewSessions.orientation": "stacked",
+    "security.workspace.trust.enabled": true,
+    "hediet.vscode-drawio.resizeImages": null,
+    "cursor.composer.queueMessageDefaultBehavior": "steer",
+    "cursor.general.glassShowWarningNotifications": true,
+    "cursor.composer.shouldChimeAfterChatFinishes": true,
+    "breadcrumbs.enabled": false
+}

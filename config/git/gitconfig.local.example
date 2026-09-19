@@ -1,0 +1,29 @@
+# Machine-only Git identity and paths. Copied to ~/.gitconfig.local by install.sh.
+# Never commit this file.
+
+[user]
+	name = Your Name
+	email = you@example.com
+
+[init]
+	defaultBranch = main
+
+# Linux
+# [credential]
+# 	helper = store
+# [core]
+# 	autocrlf = input
+# 	editor = vi
+
+# Windows
+# [credential]
+# 	helper = manager
+# [core]
+# 	autocrlf = true
+# 	editor = code --wait
+
+# Optional: different identity per worktree
+# [includeIf "gitdir:~/src/personal/"]
+# 	path = ~/.gitconfig-personal
+# [includeIf "gitdir:~/src/work/"]
+# 	path = ~/.gitconfig-work

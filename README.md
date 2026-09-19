@@ -1,3 +1,34 @@
+# One-click personal baseline
+
+This machine’s look-and-feel is the source of truth. **IDE (Cursor / VS Code / AI agents) runs on Windows.** Ubuntu/WSL gets shell + CLI toolchain only. Company settings are never overwritten — only verified.
+
+Secrets stay in `~/.bashrc.local` and `~/.gitconfig.local` (gitignored).
+
+```bash
+git clone https://github.com/naren4b/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+chmod +x install.sh uninstall.sh doctor.sh dry-run.sh harvest.sh bootstrap/ubuntu.sh company/verify-company.sh
+
+./dry-run.sh                      # live vs repo vs GitHub (no changes)
+./harvest.sh                      # on the source laptop: copy live IDE/shell into config/
+
+# Windows (full stack: IDE + extensions + gh/glab + shell links)
+powershell -ExecutionPolicy Bypass -File bootstrap/windows.ps1
+
+# Ubuntu / WSL (shell + kubectl/helm/terraform/aws/gh/glab — no IDE)
+./bootstrap/ubuntu.sh
+
+./company/verify-company.sh       # read-only company overlay check
+gh auth login                     # interactive
+glab auth login                   # interactive
+```
+
+Company placeholders (no secrets): `company/*.example`
+
+After a look-and-feel tweak on Windows, run `./harvest.sh`, then commit and push.
+
+---
+
 # WSL
 ```bash
 wsl --update

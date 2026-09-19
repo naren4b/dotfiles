@@ -1,0 +1,11 @@
+4ops.terraform
+anysphere.remote-containers
+anysphere.remote-ssh
+anysphere.remote-wsl
+bbenoist.vagrant
+hediet.vscode-drawio
+ibm.output-colorizer
+ms-toolsai.jupyter-keymap
+ms-toolsai.vscode-jupyter-slideshow
+ms-vscode.powershell
+redhat.vscode-commons

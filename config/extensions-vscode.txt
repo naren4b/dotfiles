@@ -1,0 +1,14 @@
+sdras.night-owl
+vscode-icons-team.vscode-icons
+esbenp.prettier-vscode
+foxundermoon.shell-format
+ms-python.black-formatter
+hashicorp.terraform
+hediet.vscode-drawio
+eamodio.gitlens
+redhat.vscode-yaml
+ms-vscode-remote.remote-wsl
+ms-azuretools.vscode-docker
+ms-kubernetes-tools.vscode-kubernetes-tools
+golang.go
+ms-python.python

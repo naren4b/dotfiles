@@ -1,0 +1,16 @@
+#export NO_PROXY=ndac-cicd-reg-local.artifactory-espoo2.int.net.nokia.com,*.int.net.nokia.com,*.srv.da.nsn-rdnet.net
+#export HTTPS_PROXY=http://inban1b-proxy.apac.nsn-net.net:8080
+#export HTTP_PROXY=http://inban1b-proxy.apac.nsn-net.net:8080
+
+
+complete -C C:\bin\terraform.exe terraform.exe
+complete -C /usr/bin/terraform terraform
+alias tf=terraform
+complete -C '/usr/bin/terraform' tf
+
+. "$HOME/.local/bin/env"
+
+# Machine-only secrets/env (never committed)
+if [ -f "$HOME/.bashrc.local" ]; then
+    . "$HOME/.bashrc.local"
+fi

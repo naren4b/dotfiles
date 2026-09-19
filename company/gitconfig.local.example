@@ -1,0 +1,16 @@
+# Example company Git overlay — COPY pieces into ~/.gitconfig.local.
+# Never commit real credentials or machine paths with secrets.
+
+# [user]
+# 	name = Your Work Name
+# 	email = you@company.com
+#
+# [credential "https://git.company.com"]
+# 	provider = generic
+#
+# [http]
+# 	sslVerify = true
+# 	# sslCAInfo = /path/to/company-ca.crt
+#
+# [includeIf "gitdir:~/work/"]
+# 	path = ~/.gitconfig-work
