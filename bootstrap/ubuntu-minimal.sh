@@ -54,4 +54,4 @@ for cmd in git python3 terraform podman aws; do
   command -v "$cmd" >/dev/null || { echo "ERROR: Missing $cmd" >&2; exit 1; }
 done
 echo "Lean baseline installed. Projects: ~/projects"
-echo "Next: ./scripts/storage-report.sh and ./doctor.sh"
+echo "Next: bash install.sh && bash doctor.sh && bash scripts/storage-report.sh"

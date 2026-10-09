@@ -20,10 +20,12 @@ Run on each Ubuntu WSL/VM/EC2 host:
 git clone https://github.com/naren4b/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 bash bootstrap/ubuntu-minimal.sh
-./install.sh
-./doctor.sh
+bash install.sh
+bash doctor.sh
 bash scripts/storage-report.sh
 ```
+
+`doctor.sh` checks shell links and the tool baseline. Run it **after** `install.sh` on a new host (symlink checks fail until then).
 
 For feature branches, check out the review branch before running. The existing `bootstrap/ubuntu.sh` remains an optional full-stack installer and may install additional tools.
 
