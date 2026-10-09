@@ -25,7 +25,7 @@ bash doctor.sh
 bash scripts/storage-report.sh
 ```
 
-`doctor.sh` checks shell links and the tool baseline. Run it **after** `install.sh` on a new host (symlink checks fail until then).
+`doctor.sh` checks shell symlinks, runs `scripts/verify-baseline.sh` (tool versions, Terraform cache, duplicate runtimes), and scans tracked config for secrets. Run it **after** `install.sh` on a new host (symlink checks fail until then).
 
 For feature branches, check out the review branch before running. The existing `bootstrap/ubuntu.sh` remains an optional full-stack installer and may install additional tools.
 

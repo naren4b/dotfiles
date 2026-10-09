@@ -1,0 +1,18 @@
+name: Shell lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  bash-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n on shell scripts
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' f; do
+            bash -n "$f"
+          done < <(find . -type f -name '*.sh' ! -path './.git/*' -print0)

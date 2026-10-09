@@ -3,6 +3,28 @@
 
 schema_version: 1
 
+# Portable baseline: bootstrap/ubuntu-minimal.sh + docs/portable-development.md
+profiles:
+  minimal:
+    ubuntu_tools:
+      - git
+      - python3
+      - terraform
+      - podman
+      - aws
+  full:
+    ubuntu_tools:
+      - kubectl
+      - helm
+      - terraform
+      - tofu
+      - terragrunt
+      - aws
+      - starship
+      - podman
+      - gh
+      - glab
+
 roles:
   windows:
     ide: true
@@ -13,7 +35,7 @@ roles:
     ide: false
     agents: false
     shell: true
-    toolchain: full
+    toolchain: full  # use profile minimal for WSL/VM/EC2 lean hosts; full = bootstrap/ubuntu.sh
 
 windows:
   apps:

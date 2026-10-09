@@ -67,9 +67,16 @@ else
 fi
 
 echo
-if [[ "$fail" -eq 0 ]]; then
-  echo "doctor: all checks passed"
-else
-  echo "doctor: problems found"
-  exit 1
+echo "== Toolchain baseline =="
+baseline_fail=0
+if ! bash "$ROOT/scripts/verify-baseline.sh"; then
+  baseline_fail=1
 fi
+
+echo
+if [[ "$fail" -eq 0 && "$baseline_fail" -eq 0 ]]; then
+  echo "doctor: all checks passed"
+  exit 0
+fi
+echo "doctor: problems found"
+exit 1
