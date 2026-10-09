@@ -19,10 +19,10 @@ Run on each Ubuntu WSL/VM/EC2 host:
 ```bash
 git clone https://github.com/naren4b/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./bootstrap/ubuntu-minimal.sh
+bash bootstrap/ubuntu-minimal.sh
 ./install.sh
 ./doctor.sh
-./scripts/storage-report.sh
+bash scripts/storage-report.sh
 ```
 
 For feature branches, check out the review branch before running. The existing `bootstrap/ubuntu.sh` remains an optional full-stack installer and may install additional tools.
@@ -59,8 +59,8 @@ These changes require root and should be applied only to hosts that need them. D
 ## Safe cleanup
 
 ```bash
-./scripts/storage-report.sh
-./scripts/podman-cleanup.sh
+bash scripts/storage-report.sh
+bash scripts/podman-cleanup.sh
 ```
 
 The cleanup only prunes dangling Podman images after confirmation. Do not automatically prune volumes, force-remove all images or delete Terraform provider caches. Cleaning Linux files may not immediately shrink Windows' WSL VHDX file; back up before attempting any disk compaction.
