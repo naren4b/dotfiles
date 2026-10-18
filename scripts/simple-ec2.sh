@@ -17,7 +17,9 @@ command -v aws >/dev/null || { echo "ERROR: AWS CLI missing" >&2; exit 2; }
 SSH_KEY_PATH="${SSH_KEY_PATH:-~/my-ec2}"
 SSH_KEY_PATH="${SSH_KEY_PATH/#\~/$HOME}"
 [[ -f "$SSH_KEY_PATH" ]] || { echo "ERROR: Private key missing: $SSH_KEY_PATH (set SSH_KEY_PATH in .env)" >&2; exit 2; }
-[[ -n "${AWS_KEY_NAME:-}" ]] || { echo "ERROR: Set AWS_KEY_NAME to the matching EC2 key pair name" >&2; exit 2; }
+AWS_KEY_NAME="${AWS_KEY_NAME:-$(basename "$SSH_KEY_PATH")}"
+AWS_KEY_NAME="${AWS_KEY_NAME%.pem}"
+[[ -n "$AWS_KEY_NAME" ]] || { echo "ERROR: Unable to determine EC2 key pair name" >&2; exit 2; }
 awsx() { aws --profile "$AWS_PROFILE" --region "$AWS_REGION" "$@"; }
 ids="$(awsx ec2 describe-instances --filters "Name=tag:Name,Values=$name" "Name=tag:ManagedBy,Values=$TAG" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query 'Reservations[].Instances[].InstanceId' --output text)"
 [[ "$ids" != *$'\t'* && "$ids" != *' '* ]] || { echo "ERROR: More than one matching instance exists: $ids" >&2; exit 1; }
