@@ -60,14 +60,30 @@ set -euxo pipefail
 systemd-run --unit=lab-timeout --on-active=240m /usr/sbin/shutdown -h now
 echo "[INFO] Installing git for bootstrap"
 dnf install -y git
-HOME=/home/ec2-user
-if [ ! -d "$HOME/dotfiles/.git" ]; then
-  runuser -u ec2-user -- git clone --depth 1 https://github.com/naren4b/dotfiles.git "$HOME/dotfiles"
+# Session Manager opens as ssm-user, not ec2-user.
+# Set up both users with a writable project directory and matching dotfiles.
+echo "[INFO] Creating writable learning workspaces"
+if ! id ssm-user >/dev/null 2>&1; then
+  useradd --create-home --shell /bin/bash ssm-user
 fi
+for lab_user in ssm-user ec2-user; do
+  lab_home="$(getent passwd "$lab_user" | cut -d: -f6)"
+  install -d -m 0750 -o "$lab_user" -g "$lab_user" "$lab_home/projects"
+  if [ ! -d "$lab_home/dotfiles/.git" ]; then
+    runuser -u "$lab_user" -- git clone --depth 1 https://github.com/naren4b/dotfiles.git "$lab_home/dotfiles"
+  fi
+done
 echo "[INFO] Installing general-purpose toolchain"
-bash "$HOME/dotfiles/bootstrap/amazon-linux-ec2.sh"
-echo "[INFO] Installing dotfiles"
-runuser -u ec2-user -- bash "$HOME/dotfiles/install.sh"
+bash /home/ssm-user/dotfiles/bootstrap/amazon-linux-ec2.sh
+for lab_user in ssm-user ec2-user; do
+  lab_home="$(getent passwd "$lab_user" | cut -d: -f6)"
+  echo "[INFO] Installing dotfiles for $lab_user"
+  runuser -u "$lab_user" -- env HOME="$lab_home" bash "$lab_home/dotfiles/install.sh"
+done
+echo "[INFO] Checking base tools"
+for tool in git python3 pip3 curl aws kubectl yq jq podman terraform; do
+  command -v "$tool" >/dev/null || exit 1
+done
 touch /var/log/personal-lab-ready
 echo "[INFO] Lab bootstrap complete"
 CLOUD
@@ -99,14 +115,15 @@ start() {
   local state attempt
   for ((attempt=1; attempt<=18; attempt++)); do
     state="$(awsx ssm describe-instance-information --filters "Key=InstanceIds,Values=$id" --query "InstanceInformationList[0].PingStatus" --output text)"
-    if [[ "$state" == Online ]]; then log "SSM agent is online"; return; fi
+    if [[ "$state" == Online ]]; then log "SSM agent is online; cloud-init may still be installing tools"; return; fi
     sleep 10
   done
   die "SSM agent did not become online. Inspect VPC routing, IAM, and instance logs; instance ID: $id"
 }
 connect() {
   require session-manager-plugin
-  log "Connecting to SSM instance $1"
+  log "Connecting to SSM instance $1 (user: ssm-user)"
+  log "If bootstrap is still running, inspect: sudo cloud-init status --wait"
   verify "$1"
   awsx ssm start-session --target "$1"
 }
