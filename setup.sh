@@ -6,7 +6,7 @@ if [[ "${SETUP_PACKAGES:-1}" == 1 ]]; then
   command -v apt-get >/dev/null || { echo "ERROR: setup.sh requires Ubuntu/Debian"; exit 1; }
   sudo apt-get update
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    git curl ca-certificates bash-completion vim unzip jq make python3 python3-pip
+    git curl ca-certificates bash-completion vim unzip jq make python3 python3-pip python3-venv
 fi
 # Install official AWS CLI v2, not the potentially older apt awscli package.
 if ! command -v aws >/dev/null 2>&1; then
