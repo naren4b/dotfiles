@@ -1,6 +1,6 @@
 # Base image for general CLI learning. Build locally on the EC2 host.
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
-RUN dnf install -y git curl wget tar gzip unzip jq python3 python3-pip python3-libs make findutils procps-ng shadow-utils vim podman && dnf clean all
+RUN dnf install -y git curl wget tar gzip unzip jq python3 python3-pip python3-libs make findutils procps-ng shadow-utils vim && dnf clean all
 ARG TARGETARCH=amd64
 RUN set -eux; \
   case "$(uname -m)" in x86_64) arch=amd64; awsarch=x86_64 ;; aarch64) arch=arm64; awsarch=aarch64 ;; esac; \
