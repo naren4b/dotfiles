@@ -1,6 +1,6 @@
 # Personal on-demand AWS learning instance (Mumbai, default AWS profile).
 .RECIPEPREFIX := >
-.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image
+.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local
 INSTANCE ?=
 NAME ?= personal-learning-lab
 
@@ -60,3 +60,6 @@ delete-ec2:
 
 run-my-image:
 > @bash scripts/run-my-image.sh
+
+setup-local:
+> @bash setup.sh
