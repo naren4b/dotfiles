@@ -58,12 +58,14 @@ boot_data() {
 set -euxo pipefail
 # Ensure cleanup even when the SSM connection is abandoned.
 systemd-run --unit=lab-timeout --on-active=240m /usr/sbin/shutdown -h now
-echo "[INFO] Installing learning tools"
-dnf install -y git curl tar unzip python3 python3-pip jq vim podman
+echo "[INFO] Installing git for bootstrap"
+dnf install -y git
 HOME=/home/ec2-user
 if [ ! -d "$HOME/dotfiles/.git" ]; then
   runuser -u ec2-user -- git clone --depth 1 https://github.com/naren4b/dotfiles.git "$HOME/dotfiles"
 fi
+echo "[INFO] Installing general-purpose toolchain"
+bash "$HOME/dotfiles/bootstrap/amazon-linux-ec2.sh"
 echo "[INFO] Installing dotfiles"
 runuser -u ec2-user -- bash "$HOME/dotfiles/install.sh"
 touch /var/log/personal-lab-ready
