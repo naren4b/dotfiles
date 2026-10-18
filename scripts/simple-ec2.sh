@@ -7,13 +7,16 @@ AWS_REGION="${AWS_REGION:-ap-south-1}"
 AWS_PROFILE="${AWS_PROFILE:-default}"
 EC2_TYPE="${EC2_TYPE:-t3.medium}"
 EC2_DISK_GB="${EC2_DISK_GB:-30}"
+LAB_HOURS="${LAB_HOURS:-4}"
+[[ "$LAB_HOURS" =~ ^[1-9][0-9]?$ ]] || { echo "ERROR: LAB_HOURS must be an integer from 1 to 99" >&2; exit 2; }
+LAB_MINUTES="$((LAB_HOURS * 60))"
 TAG=dotfiles-ubuntu-lab
 action="${1:-}"; name="${2:-}"
 [[ "$action" =~ ^(launch|ssh|delete)$ && "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$ ]] || { echo "Usage: $0 launch|ssh|delete <name>" >&2; exit 2; }
 command -v aws >/dev/null || { echo "ERROR: AWS CLI missing" >&2; exit 2; }
-SSH_KEY_PATH="${SSH_KEY_PATH:-~/Downloads/ec2-ofc}"
+SSH_KEY_PATH="${SSH_KEY_PATH:-~/my-ec2}"
 SSH_KEY_PATH="${SSH_KEY_PATH/#\~/$HOME}"
-[[ -f "$SSH_KEY_PATH" ]] || { echo "ERROR: Set SSH_KEY_PATH to an existing private key" >&2; exit 2; }
+[[ -f "$SSH_KEY_PATH" ]] || { echo "ERROR: Private key missing: $SSH_KEY_PATH (set SSH_KEY_PATH in .env)" >&2; exit 2; }
 [[ -n "${AWS_KEY_NAME:-}" ]] || { echo "ERROR: Set AWS_KEY_NAME to the matching EC2 key pair name" >&2; exit 2; }
 awsx() { aws --profile "$AWS_PROFILE" --region "$AWS_REGION" "$@"; }
 ids="$(awsx ec2 describe-instances --filters "Name=tag:Name,Values=$name" "Name=tag:ManagedBy,Values=$TAG" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query 'Reservations[].Instances[].InstanceId' --output text)"
@@ -61,14 +64,15 @@ userdata="$(mktemp)"; trap 'rm -f "$userdata"' EXIT
 cat >"$userdata" <<'CLOUD'
 #!/bin/bash
 set -euxo pipefail
-# Four-hour best-effort OS shutdown, with EC2 shutdown behavior terminate.
-systemd-run --unit=dotfiles-expiry --on-active=240m /usr/sbin/shutdown -h now
+# Best-effort OS shutdown, with EC2 shutdown behavior terminate.
+systemd-run --unit=dotfiles-expiry --on-active=__LAB_MINUTES__m /usr/sbin/shutdown -h now
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y git docker.io make
 systemctl enable --now docker
 touch /var/log/dotfiles-host-ready
 CLOUD
+sed -i "s/__LAB_MINUTES__/$LAB_MINUTES/" "$userdata"
 id="$(awsx ec2 run-instances --image-id "$ami" --instance-type "$EC2_TYPE" --count 1 --subnet-id "$subnet" --security-group-ids "$sg" --associate-public-ip-address --key-name "$AWS_KEY_NAME" --instance-initiated-shutdown-behavior terminate --metadata-options HttpTokens=required,HttpEndpoint=enabled --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=$EC2_DISK_GB,VolumeType=gp3,Encrypted=true,DeleteOnTermination=true}" --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$name},{Key=ManagedBy,Value=$TAG}]" --user-data "file://$userdata" --query 'Instances[0].InstanceId' --output text)"
 echo "LAUNCHED: $name ($id), region $AWS_REGION. Run make ssh-ec2 NAME=$name when ready."
-echo "NOTE: Four-hour shutdown is an OS-based safeguard, not an AWS-enforced expiry."
+echo "NOTE: Shutdown after $LAB_HOURS hour(s) is OS-based, not AWS-enforced expiry."
