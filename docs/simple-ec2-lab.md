@@ -27,3 +27,7 @@ make run-my-image
 The image is built locally from `containers/learning/Containerfile`, and the workspace `~/projects` is mounted at `/workspace`. Lab agents install additional dependencies inside their own lab image or setup workflow. No GitHub tokens are required to clone the public dotfiles repository. Never commit `.env`, `lab.env`, or private keys.
 
 **Security:** `--network host` shares the EC2 host network namespace. Docker access via sudo is root-equivalent. Container uses `--cap-drop=ALL`, `--security-opt no-new-privileges` and no `--privileged`. Environment injection is opt-in via LAB_ENV_FILE; do not include unrelated secrets in it. The container is stopped after four hours or when you exit; the host has its own four-hour shutdown safeguard.
+
+## Configurable time limit
+
+Set `LAB_HOURS=4` in the launcher's `.env` (allowed values: 1 through 99). The EC2 launcher converts this to a systemd shutdown timer with EC2 terminate-on-shutdown. On the EC2 instance, use the same setting in its local `.env` to limit `make run-my-image` with `timeout`. The two `.env` files are independent, so set both if changing the default. This is best-effort and not AWS-enforced expiry.
