@@ -42,6 +42,9 @@ if ! command -v aws >/dev/null 2>&1; then
   sudo "$tmpdir/aws/install"
 fi
 
+# Enable secure, SSH-free interactive AWS EC2 sessions.
+bash "$(dirname "$0")/install-session-manager-plugin.sh"
+
 # Terraform cache is shared across repositories. Do not duplicate providers.
 mkdir -p "$HOME/projects" "$HOME/.terraform.d/plugin-cache"
 if [[ ! -e "$HOME/.terraformrc" ]]; then
@@ -50,7 +53,7 @@ else
   echo "Keeping existing ~/.terraformrc. Configure plugin_cache_dir manually if needed."
 fi
 
-for cmd in git python3 terraform podman aws; do
+for cmd in git python3 terraform podman aws session-manager-plugin; do
   command -v "$cmd" >/dev/null || { echo "ERROR: Missing $cmd" >&2; exit 1; }
 done
 echo "Lean baseline installed. Projects: ~/projects"
