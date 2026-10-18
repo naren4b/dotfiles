@@ -42,3 +42,13 @@ To troubleshoot setup, check `sudo tail -n 100 /var/log/cloud-init-output.log`. 
 Cloud-init installs all common software and configures `ssm-user` and `ec2-user` with their own dotfiles and writable `~/projects` directories. The interactive SSM shell uses `ssm-user`; work in `~/projects`, not `/usr/bin`. To wait for software setup, run `sudo cloud-init status --wait` and inspect `/var/log/personal-lab-ready`. Use Python virtual environments per learning repo.
 
 The bootstrap does **not** ingest passwords, personal access tokens, SSH private keys, Docker Hub tokens, or AWS long-term access keys. Enter them separately and temporarily if a learning activity needs them. Git identity is distinct from GitHub login; AWS API access for a specific lab requires separately approved IAM permissions.
+
+## Named instance reuse
+
+```bash
+make ec2 NAME=attestation-lab
+```
+
+If a managed instance with the same name is running, reconnect to it without creating another. If it is pending, wait and connect. If it is stopped or stopping, fail safely instead of launching a duplicate. If no active instance matches, create a new one. The name is scoped to the current AWS account and region; duplicate matches fail safely.
+
+A newly created interactive lab is terminated when its original launcher session ends. Reconnecting to an existing lab does **not** terminate it on disconnect. The four-hour shutdown backup is scheduled from initial boot and is not reset on reconnect. Verify instance state in the AWS console. This is not a guaranteed AWS-side expiry policy.
