@@ -1,0 +1,19 @@
+# Base image for general CLI learning. Build locally on the EC2 host.
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
+RUN dnf install -y git curl wget tar gzip unzip jq python3 python3-pip python3-libs make findutils procps-ng shadow-utils vim && dnf clean all
+ARG TARGETARCH=amd64
+RUN set -eux; \
+  case "$(uname -m)" in x86_64) arch=amd64; awsarch=x86_64 ;; aarch64) arch=arm64; awsarch=aarch64 ;; esac; \
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${awsarch}.zip" -o /tmp/aws.zip; \
+  unzip -q /tmp/aws.zip -d /tmp; /tmp/aws/install; rm -rf /tmp/aws /tmp/aws.zip; \
+  curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${arch}" -o /usr/local/bin/yq; chmod +x /usr/local/bin/yq; \
+  ver="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"; \
+  curl -fsSL "https://dl.k8s.io/release/${ver}/bin/linux/${arch}/kubectl" -o /usr/local/bin/kubectl; chmod +x /usr/local/bin/kubectl; \
+  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get-helm-3; bash /tmp/get-helm-3; rm /tmp/get-helm-3
+# Terraform uses official RPM source, not an unverified binary.
+RUN dnf install -y dnf-plugins-core && dnf config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo && dnf install -y terraform && dnf clean all
+RUN useradd -m -u 1000 -s /bin/bash learner && mkdir -p /workspace && chown learner:learner /workspace
+USER learner
+WORKDIR /workspace
+ENV HOME=/home/learner
+CMD ["/bin/bash"]

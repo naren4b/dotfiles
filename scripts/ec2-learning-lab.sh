@@ -110,7 +110,7 @@ for lab_user in ssm-user ec2-user; do
   runuser -u "$lab_user" -- env HOME="$lab_home" bash "$lab_home/dotfiles/install.sh"
 done
 echo "[INFO] Checking base tools"
-for tool in git python3 pip3 curl aws kubectl yq jq podman terraform; do
+for tool in git curl make docker; do
   command -v "$tool" >/dev/null || exit 1
 done
 touch /var/log/personal-lab-ready
