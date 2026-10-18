@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+*.pem
+*.key
+my-ec2
+**/.ssh
+**/.aws
+**/.kube
+**/.config/gh
+*.local
+*.bak.*
