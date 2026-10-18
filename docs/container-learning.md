@@ -18,7 +18,7 @@ make lab-local
 ```
 The first container startup builds the reusable image on EC2 from this repository. Later starts reuse the image while the EC2 host exists. On termination, both image and workspace are removed with the root EBS volume.
 
-For local WSL or any other Linux host with Podman:
+For local WSL or any other Linux host with Podman or Docker:
 ```bash
 make lab-local
 ```
@@ -31,3 +31,7 @@ The container runs without `--privileged` and with capabilities dropped. Only th
 - A privileged host workflow, Nitro Enclaves, Docker-in-Docker or Kubernetes-in-Docker is a separate, explicitly approved lab profile.
 - The instance-side four-hour shutdown is a backup, not guaranteed AWS-side enforcement.
 - Lab content and Git changes must be pushed before terminating the instance.
+
+## Runtime permissions
+
+EC2 uses Docker installed from the Amazon Linux 2023 repository. The user does not join the `docker` group; the runner uses `sudo docker` for daemon access. Docker daemon access is effectively root privilege, although the learning container itself starts as the calling numeric user with all Linux capabilities dropped and without `--privileged`. Review untrusted container definitions before running them. On WSL/Linux with rootless Podman, the runner prefers Podman.
