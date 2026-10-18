@@ -36,3 +36,9 @@ The instance runs `bootstrap/amazon-linux-ec2.sh` at boot to install AWS CLI v2,
 Use `podman login docker.io` for Docker Hub access. Do not commit registry passwords or AWS credentials. The instance IAM role supports SSM only; add narrowly scoped permissions for AWS labs where needed.
 
 To troubleshoot setup, check `sudo tail -n 100 /var/log/cloud-init-output.log`. Creating an SSM session does not guarantee the toolchain has finished installing. Check `/var/log/personal-lab-ready` for successful setup.
+
+## Post-launch configuration contract
+
+Cloud-init installs all common software and configures `ssm-user` and `ec2-user` with their own dotfiles and writable `~/projects` directories. The interactive SSM shell uses `ssm-user`; work in `~/projects`, not `/usr/bin`. To wait for software setup, run `sudo cloud-init status --wait` and inspect `/var/log/personal-lab-ready`. Use Python virtual environments per learning repo.
+
+The bootstrap does **not** ingest passwords, personal access tokens, SSH private keys, Docker Hub tokens, or AWS long-term access keys. Enter them separately and temporarily if a learning activity needs them. Git identity is distinct from GitHub login; AWS API access for a specific lab requires separately approved IAM permissions.
