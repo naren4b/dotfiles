@@ -17,8 +17,8 @@ if [[ ! -d "$REPOSITORY_DIR/.git" ]]; then
     cat > "$askpass" <<'ASKPASS'
 #!/bin/sh
 case "$1" in
-  *Username*) printf '%s\\n' 'x-access-token' ;;
-  *Password*) printf '%s\\n' "$GITHUB_TOKEN" ;;
+  *Username*) printf '%s\n' 'x-access-token' ;;
+  *Password*) printf '%s\n' "$GITHUB_TOKEN" ;;
 esac
 ASKPASS
     chmod 700 "$askpass"
