@@ -6,13 +6,13 @@ On WSL, Git Bash, Linux EC2 or PowerShell with Bash/Make and AWS CLI installed:
 git clone https://github.com/naren4b/dotfiles.git
 cd dotfiles
 cp .env.example .env
-# Edit .env: AWS_KEY_NAME, SSH_KEY_PATH, SSH_CIDR (your public /32)
+# Edit .env: AWS_KEY_NAME, SSH_CIDR (your public /32); SSH_KEY_PATH defaults to ~/Downloads/ec2-ofc
 make launch-ec2 NAME=test-lab
 make ssh-ec2 NAME=test-lab
 make delete-ec2 NAME=test-lab
 ```
 
-GNU Make requires `NAME=` syntax, not `make launch-ec2 test-lab`. PowerShell requires Make and Bash installed/on PATH (or run from Git Bash). Key paths must be readable in the executing shell. EC2 uses Ubuntu 24.04 LTS, public subnet/IP, restricted port 22, a 30 GiB encrypted gp3 disk and an on-instance four-hour termination timer. There is no guarantee of AWS-side termination if cloud-init or the operating system fails; check active resources in the console.
+The default private-key location is `~/Downloads/ec2-ofc` (a file, not a directory). `AWS_KEY_NAME` must reference its matching EC2 key pair. Keep the key readable only by your user (`chmod 600 ~/Downloads/ec2-ofc`).\n\nGNU Make requires `NAME=` syntax, not `make launch-ec2 test-lab`. PowerShell requires Make and Bash installed/on PATH (or run from Git Bash). Key paths must be readable in the executing shell. EC2 uses Ubuntu 24.04 LTS, public subnet/IP, restricted port 22, a 30 GiB encrypted gp3 disk and an on-instance four-hour termination timer. There is no guarantee of AWS-side termination if cloud-init or the operating system fails; check active resources in the console.
 
 Inside EC2:
 
