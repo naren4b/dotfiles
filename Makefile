@@ -1,6 +1,6 @@
 # Personal on-demand AWS learning instance (Mumbai, default AWS profile).
 .RECIPEPREFIX := >
-.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image
+.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local
 INSTANCE ?=
 NAME ?= personal-learning-lab
 
@@ -15,6 +15,7 @@ help:
 > @echo "make ssh-ec2 NAME=lab        SSH into existing Ubuntu EC2"
 > @echo "make delete-ec2 NAME=lab     Terminate Ubuntu EC2"
 > @echo "make run-my-image            Run lab container on EC2"
+> @echo "make setup-local             Install dotfiles directly on Ubuntu"
 
 ec2:
 > @bash scripts/ec2-learning-lab.sh lab "$(NAME)"
@@ -48,3 +49,6 @@ delete-ec2:
 run-my-image:
 > @bash scripts/run-my-image.sh
 
+
+setup-local:
+> @bash setup.sh
