@@ -28,3 +28,11 @@ Prerequisites: AWS CLI v2, Session Manager plugin, valid default AWS credentials
 Leaving the SSM session causes the controlling `make ec2` process to request termination. Cloud-init also schedules an OS shutdown after four hours, and EC2 is configured to **terminate** on instance-initiated shutdown. The timeout is not a guaranteed account-side enforcement mechanism. Confirm the final state in the AWS Console; an interrupted terminal or failed cloud-init may leave resources running. Compute, gp3, public IPv4, and data transfer may all cost money. Root EBS is deleted on termination.
 
 To inspect instance bootstrap, use `sudo tail -f /var/log/cloud-init-output.log`. Scripts, notes and data should be persisted outside the disposable instance before exit.
+
+## Preinstalled tools
+
+The instance runs `bootstrap/amazon-linux-ec2.sh` at boot to install AWS CLI v2, Git, curl, wget, Python 3, Podman, jq, yq, kubectl, Helm, Terraform, make, and standard Linux utilities. The dotfiles installer configures shell and Git defaults afterward.
+
+Use `podman login docker.io` for Docker Hub access. Do not commit registry passwords or AWS credentials. The instance IAM role supports SSM only; add narrowly scoped permissions for AWS labs where needed.
+
+To troubleshoot setup, check `sudo tail -n 100 /var/log/cloud-init-output.log`. Creating an SSM session does not guarantee the toolchain has finished installing. Check `/var/log/personal-lab-ready` for successful setup.
