@@ -8,6 +8,7 @@ DISK_GB=30
 ROLE=personal-learning-ec2-ssm
 SG_NAME=personal-learning-ec2-no-ingress
 NAME=personal-learning-lab
+NAME="${LAB_NAME:-$NAME}"
 export AWS_PAGER=""
 log() { printf '[%s] [INFO] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2; }
 warn() { printf '[%s] [WARN] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2; }
@@ -16,7 +17,35 @@ die() { printf "[%s] [ERROR] %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2; ex
 require() { command -v "$1" >/dev/null || die "Missing $1"; }
 identity() { awsx sts get-caller-identity --query Account --output text; }
 tag() { awsx ec2 describe-instances --instance-ids "$1" --query "Reservations[0].Instances[0].Tags[?Key=='ManagedBy'].Value|[0]" --output text; }
-verify() { [[ "$1" =~ ^i-[0-9a-f]{8,17}$ ]] || die "Bad instance ID"; [[ "$(tag "$1")" == general-learning-lab ]] || die "Not a managed lab instance"; }
+verify() {
+  [[ "$1" =~ ^i-[0-9a-f]{8,17}$ ]] || die "Bad instance ID"
+  [[ "$(tag "$1")" == general-learning-lab ]] || die "Not a managed lab instance"
+  local acct
+  acct="$(awsx ec2 describe-instances --instance-ids "$1" --query "Reservations[0].Instances[0].Tags[?Key=='OwnerAccount'].Value|[0]" --output text)"
+  [[ "$acct" == "$(identity)" ]] || die "Instance account mismatch"
+}
+validate_name() {
+  [[ "$NAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$ ]] || die "Invalid lab name: $NAME"
+}
+find_existing() {
+  local entries
+  entries="$(awsx ec2 describe-instances --filters "Name=tag:Name,Values=$NAME" "Name=tag:ManagedBy,Values=general-learning-lab" "Name=tag:OwnerAccount,Values=$(identity)" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query 'Reservations[].Instances[].InstanceId' --output text)"
+  [[ -n "$entries" && "$entries" != None ]] || return 1
+  local ids=()
+  read -r -a ids <<< "$entries"
+  [[ "${#ids[@]}" -eq 1 ]] || die "Multiple active instances named $NAME; use an instance ID to resolve"
+  EXISTING_ID="${ids[0]}"
+}
+wait_for_ssm() {
+  local id="$1" state attempt
+  log "Waiting for SSM agent on $id"
+  for ((attempt=1; attempt<=18; attempt++)); do
+    state="$(awsx ssm describe-instance-information --filters "Key=InstanceIds,Values=$id" --query "InstanceInformationList[0].PingStatus" --output text)"
+    if [[ "$state" == Online ]]; then log "SSM agent online"; return 0; fi
+    sleep 10
+  done
+  die "SSM agent did not come online for $id"
+}
 setup_role() {
   log "Preparing SSM IAM role and instance profile: $ROLE"
   if ! awsx iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
@@ -97,13 +126,14 @@ preflight() {
 }
 start() {
   preflight
+  validate_name
   network
   setup_role
   log "IAM and network prerequisites ready"
   boot_data
   local ami id
   ami="$(awsx ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 --query Parameter.Value --output text)"
-  log "Launching $TYPE with ${DISK_GB}GiB gp3 in $REGION"
+  log "Launching $NAME ($TYPE with ${DISK_GB}GiB gp3) in $REGION"
   id="$(awsx ec2 run-instances --image-id "$ami" --instance-type "$TYPE" --count 1 --subnet-id "$SUBNET" --security-group-ids "$SG" --associate-public-ip-address --iam-instance-profile "Name=$ROLE" --metadata-options 'HttpTokens=required,HttpEndpoint=enabled,HttpPutResponseHopLimit=2' --instance-initiated-shutdown-behavior terminate --block-device-mappings "DeviceName=/dev/xvda,Ebs={VolumeSize=$DISK_GB,VolumeType=gp3,Encrypted=true,DeleteOnTermination=true}" --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$NAME},{Key=ManagedBy,Value=general-learning-lab},{Key=OwnerAccount,Value=$(identity)}]" --user-data "file://$USER_DATA" --query 'Instances[0].InstanceId' --output text)"
   rm -f "$USER_DATA"
   LAB_ID="$id"
@@ -111,14 +141,7 @@ start() {
   log "Waiting for EC2 instance to reach running state: $id"
   awsx ec2 wait instance-running --instance-ids "$id"
   log "Instance running: $id"
-  log "Waiting for SSM agent to register (maximum 3 minutes)"
-  local state attempt
-  for ((attempt=1; attempt<=18; attempt++)); do
-    state="$(awsx ssm describe-instance-information --filters "Key=InstanceIds,Values=$id" --query "InstanceInformationList[0].PingStatus" --output text)"
-    if [[ "$state" == Online ]]; then log "SSM agent is online; cloud-init may still be installing tools"; return; fi
-    sleep 10
-  done
-  die "SSM agent did not become online. Inspect VPC routing, IAM, and instance logs; instance ID: $id"
+  wait_for_ssm "$id"
 }
 connect() {
   require session-manager-plugin
@@ -134,17 +157,49 @@ end() {
   awsx ec2 wait instance-terminated --instance-ids "$1"
   log "Instance terminated: $1"
 }
-case "${1:-lab}" in
+ACTION="${1:-lab}"
+if [[ "$ACTION" == lab || "$ACTION" == start ]]; then
+  NAME="${2:-$NAME}"
+fi
+case "$ACTION" in
   start) start ;;
   connect) [[ $# -eq 2 ]] || die "Usage: $0 connect i-..."; connect "$2" ;;
   end) [[ $# -eq 2 ]] || die "Usage: $0 end i-..."; end "$2" ;;
   lab)
-    LAB_ID=""
-    cleanup() { trap - EXIT INT TERM; if [[ -n "$LAB_ID" ]]; then end "$LAB_ID" || echo "WARNING: manually terminate $LAB_ID" >&2; fi; }
-    trap cleanup EXIT INT TERM
-    start
-    log "Opening interactive lab session. Exit the shell to terminate EC2."
-    connect "$LAB_ID"
+    preflight
+    validate_name
+    log "Checking for existing lab: $NAME"
+    if find_existing; then
+      state="$(awsx ec2 describe-instances --instance-ids "$EXISTING_ID" --query 'Reservations[0].Instances[0].State.Name' --output text)"
+      case "$state" in
+        running)
+          log "Reusing running instance $EXISTING_ID; session exit will leave it running"
+          wait_for_ssm "$EXISTING_ID"
+          connect "$EXISTING_ID"
+          ;;
+        pending)
+          log "Waiting for existing instance $EXISTING_ID to start"
+          awsx ec2 wait instance-running --instance-ids "$EXISTING_ID"
+          wait_for_ssm "$EXISTING_ID"
+          connect "$EXISTING_ID"
+          ;;
+        *)
+          die "Existing instance $EXISTING_ID is $state. End it explicitly before creating another."
+          ;;
+      esac
+    else
+      LAB_ID=""
+      cleanup() {
+        trap - EXIT INT TERM
+        if [[ -n "$LAB_ID" ]]; then
+          end "$LAB_ID" || warn "Cleanup failed for $LAB_ID. Terminate it manually."
+        fi
+      }
+      trap cleanup EXIT INT TERM
+      start
+      log "Created $LAB_ID; session exit will terminate this new instance"
+      connect "$LAB_ID"
+    fi
     ;;
-  *) die "Usage: $0 [lab|start|connect INSTANCE_ID|end INSTANCE_ID]" ;;
+  *) die "Usage: $0 [lab [NAME]|start [NAME]|connect INSTANCE_ID|end INSTANCE_ID]" ;;
 esac
