@@ -31,3 +31,22 @@ The image is built locally from `containers/learning/Containerfile`, and the wor
 ## Configurable time limit
 
 Set `LAB_HOURS=4` in the launcher's `.env` (allowed values: 1 through 99). The EC2 launcher converts this to a systemd shutdown timer with EC2 terminate-on-shutdown. On the EC2 instance, use the same setting in its local `.env` to limit `make run-my-image` with `timeout`. The two `.env` files are independent, so set both if changing the default. This is best-effort and not AWS-enforced expiry.
+
+## AWS authentication: laptop, EC2 and Docker
+
+- **Laptop/WSL:** Configure a local AWS profile with `aws configure sso` when IAM Identity Center is available, or use approved short-lived credentials. Check `aws sts get-caller-identity` before creating instances. Never place AWS access keys in `.env`.
+- **Ubuntu EC2:** Attach an existing least-privilege IAM instance profile to the instance. The current simple Ubuntu launcher does **not** attach a role automatically. In EC2 Console select **Instances → Actions → Security → Modify IAM role**. Do not create administrator credentials or add permanent access keys to disposable hosts.
+- **After running `aws configure` on EC2:** `aws configure list` shows where settings are loaded from; `aws sts get-caller-identity` shows which identity is active. A static key in `~/.aws/credentials` can take precedence over the instance profile. After successfully attaching/testing the role, remove the static keys from the disposable EC2 (do not blindly delete shared configuration on other machines).
+- **Docker:** `run-my-image` uses host networking. EC2 role credentials may be discovered via IMDS if it is enabled and reachable. Access to instance metadata from a container is security-sensitive: only trusted lab images and users, and role permissions restricted to the lab's need. Never bind-mount `~/.aws` or pass credential variables by default.
+
+Check on the EC2 host:
+
+```bash
+aws --version
+aws configure list
+aws sts get-caller-identity
+```
+
+The `make setup-local` target runs shared `setup.sh` which installs the official AWS CLI v2 if missing (pending the related setup PR until merged). For S3, KMS or other AWS lab APIs, request scoped permissions on the instance role, not long-term IAM user access keys.
+
+References: [AWS EC2 instance roles](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [Attach an IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/attach-iam-role.html).
