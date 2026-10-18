@@ -48,15 +48,3 @@ delete-ec2:
 run-my-image:
 > @bash scripts/run-my-image.sh
 
-.PHONY: launch-ec2 ssh-ec2 delete-ec2 run-my-image
-launch-ec2:
-> @bash scripts/simple-ec2.sh launch "$(NAME)"
-
-ssh-ec2:
-> @bash scripts/simple-ec2.sh ssh "$(NAME)"
-
-delete-ec2:
-> @bash scripts/simple-ec2.sh delete "$(NAME)"
-
-run-my-image:
-> @bash scripts/run-my-image.sh
