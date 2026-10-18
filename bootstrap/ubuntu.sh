@@ -72,6 +72,9 @@ if ! have aws; then
   rm -rf /tmp/aws /tmp/awscliv2.zip
 fi
 
+echo "--- AWS Session Manager plugin ---"
+bash "$ROOT/bootstrap/install-session-manager-plugin.sh"
+
 if ! have starship; then
   echo "install starship"
   curl -fsSL https://starship.rs/install.sh | sh -s -- -y || true

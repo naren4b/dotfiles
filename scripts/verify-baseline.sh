@@ -54,6 +54,11 @@ if [[ "$OS" == "wsl" || "$OS" == "linux" ]]; then
   check_version terraform terraform version
   check_version podman podman --version
   check_version aws aws --version
+  if command -v session-manager-plugin >/dev/null 2>&1; then
+    note_ok "AWS Session Manager plugin is installed"
+  else
+    note_fail "AWS Session Manager plugin missing (run bootstrap/install-session-manager-plugin.sh)"
+  fi
 
   if command -v docker >/dev/null 2>&1 && command -v podman >/dev/null 2>&1; then
     note_warn "both docker and podman on PATH — prefer rootless podman only to save disk and avoid duplicate runtimes"
