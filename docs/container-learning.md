@@ -35,3 +35,7 @@ The container runs without `--privileged` and with capabilities dropped. Only th
 ## Runtime permissions
 
 EC2 uses Docker installed from the Amazon Linux 2023 repository. The user does not join the `docker` group; the runner uses `sudo docker` for daemon access. Docker daemon access is effectively root privilege, although the learning container itself starts as the calling numeric user with all Linux capabilities dropped and without `--privileged`. Review untrusted container definitions before running them. On WSL/Linux with rootless Podman, the runner prefers Podman.
+
+## One-command Git setup
+
+Inside the EC2 SSM shell, run `export GITHUB_TOKEN=<TOKEN>` if authenticated GitHub access is needed, then `cd ~/dotfiles && make lab-local`. This command clones `learn-aws` into `~/projects/learn-aws` if absent, using an ephemeral Git askpass helper, deletes the helper, and starts the learning container with that workspace mounted. No token is passed into the container image or Docker environment. You may `unset GITHUB_TOKEN` after the command exits. If no token is set, a public unauthenticated clone is attempted. Existing repositories are left unchanged, without an automatic pull.
