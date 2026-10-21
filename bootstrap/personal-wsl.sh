@@ -2,7 +2,7 @@
 # Personal Ubuntu WSL development profile. Does not touch company configuration.
 set -euo pipefail
 
-mode="$"+"{1:-check}"
+mode="${1:-check}"
 workspace="$HOME/ws/personal"
 cv_repo="$workspace/my-cv"
 
