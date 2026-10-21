@@ -1,6 +1,6 @@
 # Personal on-demand AWS learning instance (Mumbai, default AWS profile).
 .RECIPEPREFIX := >
-.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local
+.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local personal-wsl-check personal-wsl-install
 INSTANCE ?=
 NAME ?= personal-learning-lab
 
@@ -52,3 +52,9 @@ run-my-image:
 
 setup-local:
 > @bash setup.sh
+
+personal-wsl-check:
+> @bash bootstrap/personal-wsl.sh check
+
+personal-wsl-install:
+> @bash bootstrap/personal-wsl.sh install
