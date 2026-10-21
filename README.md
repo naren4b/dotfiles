@@ -32,8 +32,8 @@ Python 3.12, Node.js LTS, Codex, GitHub CLI and supported Playwright
 Chromium, without installing optional cloud lab tools.
 
 ```bash
-make personal-wsl-check
-make personal-wsl-install
+make profile-check PROFILE=personal-wsl
+make profile-install PROFILE=personal-wsl
 ```
 
 Run only inside Ubuntu WSL. Company Git and credentials are untouched.
