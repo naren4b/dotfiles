@@ -63,3 +63,21 @@ cd ~/ws/personal/my-cv
 ```
 
 No release approvals, CIBC application records or Drive files are changed.
+
+## Other host profiles
+
+All profiles use the same Make dispatcher and reuse existing bootstrap scripts:
+
+| Profile | Check | Install behavior |
+| --- | --- | --- |
+| `personal-wsl` | Check personal laptop tools | Python, Codex, CV prerequisites |
+| `ofc-wsl` | Check corporate overlay (read-only) | Blocked without separate approval |
+| `ec2-apt` | Check command availability | Existing Ubuntu lean bootstrap |
+| `ec2-yum` | Check command availability | Existing Amazon Linux dnf bootstrap |
+
+Use `make profile-check PROFILE=<profile>` or
+`make profile-install PROFILE=<profile>`.
+
+The `ec2-yum` name is an interface alias; Amazon Linux 2023 uses
+`dnf`. The company profile never installs packages or changes work
+credentials. Inspect the EC2 bootstrap before provisioning machines.
