@@ -1,6 +1,8 @@
 # Personal on-demand AWS learning instance (Mumbai, default AWS profile).
 .RECIPEPREFIX := >
-.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local personal-wsl-check personal-wsl-install
+.PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local
+.PHONY: launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local
+.PHONY: personal-wsl-check personal-wsl-install
 INSTANCE ?=
 NAME ?= personal-learning-lab
 
@@ -16,6 +18,8 @@ help:
 > @echo "make delete-ec2 NAME=lab     Terminate Ubuntu EC2"
 > @echo "make run-my-image            Run lab container on EC2"
 > @echo "make setup-local             Install dotfiles directly on Ubuntu"
+> @echo "make personal-wsl-check      Check personal WSL toolchain"
+> @echo "make personal-wsl-install    Install personal WSL core + CV tools"
 
 ec2:
 > @bash scripts/ec2-learning-lab.sh lab "$(NAME)"
