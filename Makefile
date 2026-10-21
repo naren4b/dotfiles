@@ -3,8 +3,10 @@
 .PHONY: help ec2 ec2-start ec2-connect ec2-end ec2-check lab-local
 .PHONY: launch-ec2 ssh-ec2 delete-ec2 run-my-image setup-local
 .PHONY: personal-wsl-check personal-wsl-install
+.PHONY: profile-check profile-install personal-wsl ofc-wsl ec2-apt ec2-yum
 INSTANCE ?=
 NAME ?= personal-learning-lab
+PROFILE ?= personal-wsl
 
 help:
 > @echo "make ec2 NAME=my-lab        Reuse running lab or create and connect"
@@ -20,6 +22,9 @@ help:
 > @echo "make setup-local             Install dotfiles directly on Ubuntu"
 > @echo "make personal-wsl-check      Check personal WSL toolchain"
 > @echo "make personal-wsl-install    Install personal WSL core + CV tools"
+> @echo "make profile-check PROFILE=personal-wsl  Check selected profile"
+> @echo "make profile-install PROFILE=personal-wsl Install selected profile"
+> @echo "Profiles: personal-wsl, ofc-wsl, ec2-apt, ec2-yum"
 
 ec2:
 > @bash scripts/ec2-learning-lab.sh lab "$(NAME)"
@@ -58,7 +63,26 @@ setup-local:
 > @bash setup.sh
 
 personal-wsl-check:
-> @bash bootstrap/personal-wsl.sh check
+> @$(MAKE) profile-check PROFILE=personal-wsl
 
 personal-wsl-install:
-> @bash bootstrap/personal-wsl.sh install
+> @$(MAKE) profile-install PROFILE=personal-wsl
+
+# One entrypoint, existing distribution-specific bootstrap scripts.
+profile-check:
+> @bash bootstrap/profile.sh "$(PROFILE)" check
+
+profile-install:
+> @bash bootstrap/profile.sh "$(PROFILE)" install
+
+personal-wsl:
+> @$(MAKE) profile-install PROFILE=personal-wsl
+
+ofc-wsl:
+> @$(MAKE) profile-check PROFILE=ofc-wsl
+
+ec2-apt:
+> @$(MAKE) profile-install PROFILE=ec2-apt
+
+ec2-yum:
+> @$(MAKE) profile-install PROFILE=ec2-yum
