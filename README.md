@@ -25,6 +25,19 @@ bash scripts/storage-report.sh
 
 **Containers:** rootless Podman only — see [podman-setup.md](podman-setup.md). Do not use `chmod 666` on `/var/run/docker.sock`.
 
+## Personal laptop WSL (Codex + CV pipeline)
+
+Use [the personal laptop WSL profile](docs/personal-laptop-wsl.md) for
+Python 3.12, Node.js LTS, Codex, GitHub CLI and supported Playwright
+Chromium, without installing optional cloud lab tools.
+
+```bash
+make personal-wsl-check
+make personal-wsl-install
+```
+
+Run only inside Ubuntu WSL. Company Git and credentials are untouched.
+
 ## Full stack (optional)
 
 Extra tools (kubectl, Helm, OpenTofu, Terragrunt, `gh`, `glab`, and more): [bootstrap/README.md](bootstrap/README.md)
