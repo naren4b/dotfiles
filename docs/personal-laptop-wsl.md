@@ -25,8 +25,8 @@ cd ~/ws/personal
 git clone git@github.com:naren4b/dotfiles.git
 git clone git@github.com:naren4b/my-cv.git
 cd dotfiles
-bash bootstrap/personal-wsl.sh check
-bash bootstrap/personal-wsl.sh install
+make profile-check PROFILE=personal-wsl
+make profile-install PROFILE=personal-wsl
 ```
 
 The install command does not install optional cloud lab tools.
@@ -56,7 +56,7 @@ SSH keys, proxy settings, credentials or corporate config.
 ## Validate
 
 ```bash
-bash bootstrap/personal-wsl.sh check
+make profile-check PROFILE=personal-wsl
 cd ~/ws/personal/my-cv
 .venv/bin/python cv-architect-v2/scripts/cv2.py dependencies
 .venv/bin/python -m unittest discover -s cv-architect-v2/tests -v
