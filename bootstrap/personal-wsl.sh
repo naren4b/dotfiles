@@ -13,7 +13,8 @@ fi
 
 check() {
   echo "Workspace: $workspace"
-  for cmd in git ssh gh python3.12 pipx node npm codex make jq curl aws terraform kubectl helm podman; do
+  for cmd in git ssh gh python3.12 pipx node npm codex make jq curl \
+    aws terraform kubectl helm podman; do
     printf '%-14s ' "$cmd"
     command -v "$cmd" || echo "not installed"
   done
