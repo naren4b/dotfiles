@@ -5,6 +5,31 @@ schema_version: 1
 
 # Portable baseline: bootstrap/ubuntu-minimal.sh + docs/portable-development.md
 profiles:
+  personal-wsl:
+    ubuntu_tools:
+      - git
+      - openssh-client
+      - python3.12
+      - pipx
+      - gh
+      - node-lts
+      - codex
+      - playwright-chromium
+    optional_lab_tools:
+      - aws
+      - terraform
+      - kubectl
+      - helm
+      - podman
+      - ansible
+  ofc-wsl:
+    operation: read-only
+    tools: []
+    company_configuration: untouched
+  ec2-apt:
+    bootstrap: bootstrap/ubuntu-minimal.sh
+  ec2-yum:
+    bootstrap: bootstrap/amazon-linux-ec2.sh
   minimal:
     ubuntu_tools:
       - git
