@@ -25,6 +25,12 @@ bash scripts/storage-report.sh
 
 **Containers:** rootless Podman only — see [podman-setup.md](podman-setup.md). Do not use `chmod 666` on `/var/run/docker.sock`.
 
+## Lab toolbox (optional)
+
+Use the [shared lab toolbox](docs/lab-toolbox.md) for AWS, Terraform,
+Kubernetes, GitHub, PostgreSQL and network labs on Ubuntu 24.04.
+Build it once with rootless Podman and run it from any lab checkout.
+
 ## Personal laptop WSL (Codex + CV pipeline)
 
 Use [the personal laptop WSL profile](docs/personal-laptop-wsl.md) for
