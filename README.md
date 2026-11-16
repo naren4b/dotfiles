@@ -29,6 +29,8 @@ bash scripts/storage-report.sh
 
 Use the [shared lab toolbox](docs/lab-toolbox.md) for AWS, Terraform,
 Kubernetes, GitHub, PostgreSQL and network labs on Ubuntu 24.04.
+The image also includes Docker CLI, KIND, Argo CD CLI and Helm 4 (`helm4`),
+while keeping Helm 3 as `helm`.
 Build it once with rootless Podman and run it from any lab checkout.
 
 ## Personal laptop WSL (Codex + CV pipeline)
