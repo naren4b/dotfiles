@@ -132,11 +132,11 @@ from any project directory:
 
 ```bash
 # Build automatically on first use.
-~/dotfiles/scripts/toolbox-privileged.sh
+bash ~/dotfiles/scripts/toolbox-privileged.sh
 
 # Run one CLI command without entering a shell.
-~/dotfiles/scripts/toolbox-privileged.sh aws --version
-~/dotfiles/scripts/toolbox-privileged.sh kind version
+bash ~/dotfiles/scripts/toolbox-privileged.sh aws --version
+bash ~/dotfiles/scripts/toolbox-privileged.sh kind version
 ```
 
 This runner uses `--network host --user 0:0 --privileged`, mounts the
@@ -148,7 +148,7 @@ To opt in to credentials and cluster configuration:
 
 ```bash
 TOOLBOX_MOUNT_KUBE=1 TOOLBOX_MOUNT_AWS=1 \
-  ~/dotfiles/scripts/toolbox-privileged.sh bash
+  bash ~/dotfiles/scripts/toolbox-privileged.sh bash
 ```
 
 **Security:** Privileged mode plus the Docker socket gives the container
