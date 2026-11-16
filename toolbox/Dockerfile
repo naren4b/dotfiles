@@ -4,10 +4,13 @@ ARG AWS_CLI_VERSION=2.31.0
 ARG TERRAFORM_VERSION=1.13.5
 ARG KUBECTL_VERSION=v1.35.9
 ARG HELM_VERSION=v3.20.2
+ARG HELM4_VERSION=v4.0.0
+ARG KIND_VERSION=v0.33.0
+ARG ARGOCD_VERSION=v3.1.9
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       ca-certificates curl dnsutils gh git iproute2 iputils-ping jq less \
+       ca-certificates curl dnsutils docker.io gh git iproute2 iputils-ping jq less \
        netcat-openbsd openssh-client openssl postgresql-client unzip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -42,7 +45,17 @@ RUN set -eu; \
     curl -fsSL "https://get.helm.sh/${helm_archive}.sha256" -o helm.sha256; \
     printf '%s  %s\n' "$(cat helm.sha256)" "$helm_archive" | sha256sum -c -; \
     tar -xzf "$helm_archive" "linux-${arch}/helm"; \
-    install -m 0755 "linux-${arch}/helm" /usr/local/bin/helm
+    install -m 0755 "linux-${arch}/helm" /usr/local/bin/helm; \
+    helm4_archive="helm-${HELM4_VERSION}-linux-${arch}.tar.gz"; \
+    curl -fsSLO "https://get.helm.sh/${helm4_archive}"; \
+    curl -fsSL "https://get.helm.sh/${helm4_archive}.sha256" -o helm4.sha256; \
+    printf '%s  %s\n' "$(cat helm4.sha256)" "$helm4_archive" | sha256sum -c -; \
+    tar -xzf "$helm4_archive" "linux-${arch}/helm"; \
+    install -m 0755 "linux-${arch}/helm" /usr/local/bin/helm4; \
+    curl -fsSL "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-${arch}" -o kind; \
+    install -m 0755 kind /usr/local/bin/kind; \
+    curl -fsSL "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-${arch}" -o argocd; \
+    install -m 0755 argocd /usr/local/bin/argocd
 
 ENV HOME=/tmp \
     AWS_EC2_METADATA_DISABLED=true \
