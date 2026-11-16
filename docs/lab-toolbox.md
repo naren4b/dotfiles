@@ -123,3 +123,40 @@ host-level control, even if the image starts as a non-root user.
 The build accepts version overrides with `--build-arg` for
 `KIND_VERSION`, `ARGOCD_VERSION` and `HELM4_VERSION`.
 Test CLI compatibility with each cluster and chart before upgrading.
+
+
+## Opt-in administrator toolbox (Docker)
+
+For trusted labs that need the host network, root access or KIND, run
+from any project directory:
+
+```bash
+# Build automatically on first use.
+bash ~/dotfiles/scripts/toolbox-privileged.sh
+
+# Run one CLI command without entering a shell.
+bash ~/dotfiles/scripts/toolbox-privileged.sh aws --version
+bash ~/dotfiles/scripts/toolbox-privileged.sh kind version
+```
+
+This runner uses `--network host --user 0:0 --privileged`, mounts the
+current directory read-write at `/work`, and mounts the Docker socket
+when it exists. It uses the **host's Docker daemon** for Docker/KIND;
+no daemon runs in the toolbox container.
+
+To opt in to credentials and cluster configuration:
+
+```bash
+TOOLBOX_MOUNT_KUBE=1 TOOLBOX_MOUNT_AWS=1 \
+  bash ~/dotfiles/scripts/toolbox-privileged.sh bash
+```
+
+**Security:** Privileged mode plus the Docker socket gives the container
+effective administrator access to the host. Host networking removes
+network namespace isolation. Run this only with a trusted image and
+trusted local project content. Root may create root-owned files in
+your project directory. AWS files are read-only inside the container,
+but remote AWS permissions remain fully usable. For normal work use
+the default unprivileged Podman runner above.
+
+AWS CLI v2 is **already included** in `toolbox/Dockerfile`.
