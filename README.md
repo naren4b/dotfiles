@@ -32,6 +32,8 @@ Kubernetes, GitHub, PostgreSQL and network labs on Ubuntu 24.04.
 The image also includes Docker CLI, KIND, Argo CD CLI and Helm 4 (`helm4`),
 while keeping Helm 3 as `helm`.
 Build it once with rootless Podman and run it from any lab checkout.
+For trusted KIND/Docker labs that require host networking and root access,
+see the opt-in privileged Docker runner in the [toolbox guide](docs/lab-toolbox.md).
 
 ## Personal laptop WSL (Codex + CV pipeline)
 
