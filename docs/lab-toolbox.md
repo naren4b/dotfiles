@@ -11,8 +11,10 @@ sets up rootless Podman. Skip the bootstrap if Podman already works.
 | --- | --- |
 | AWS CLI v2 | Inspect AWS identity, services and resources |
 | Terraform | Format, validate and plan infrastructure |
-| kubectl and Helm 3 | Inspect Kubernetes and render charts |
+| kubectl, Helm 3 and Helm 4 (`helm4`) | Inspect Kubernetes and render charts while keeping Helm 3 compatible |
 | Git and GitHub CLI | Inspect source and work with GitHub PRs |
+| Docker CLI and KIND | Inspect containers and create local Kubernetes clusters when a host Docker daemon is explicitly provided |
+| Argo CD CLI | Inspect and manage Argo CD with explicit cluster access |
 | PostgreSQL client | Connect with `psql` and inspect databases |
 | jq | Filter JSON output |
 | curl, dig, ip, ss, ping, nc, openssl, ssh | Debug HTTP, DNS, routes, sockets, TLS and SSH |
@@ -42,6 +44,10 @@ podman run --rm --network=none localhost/lab-toolbox:local bash -ec '
   terraform version
   kubectl version --client
   helm version --short
+  helm4 version --short
+  docker --version
+  kind version
+  argocd version --client
   git --version
   gh --version
   psql --version
@@ -50,7 +56,7 @@ podman run --rm --network=none localhost/lab-toolbox:local bash -ec '
 '
 ```
 
-The Dockerfile pins AWS CLI, Terraform, kubectl and Helm. Match Terraform
+The Dockerfile pins AWS CLI, Terraform, kubectl, Helm 3, Helm 4, KIND and Argo CD CLI. Match Terraform
 to the lab module and kubectl to the target cluster before connecting.
 Rebuild with reviewed version overrides when a project needs other versions.
 
@@ -91,3 +97,29 @@ mount and set `KUBECONFIG` to its path inside the container. An EKS config
 with an AWS exec helper also needs the intended AWS profile. Read-only
 mounts protect local files. IAM and Kubernetes permissions control what
 the tools can change remotely.
+
+
+## Kubernetes and Docker workflows
+
+The default image is a CLI toolbox, not a Docker-in-Docker image.
+It does **not** run a Docker daemon or create a Kubernetes cluster.
+Helm 3 remains `helm`; Helm 4 is `helm4` so older labs do not break.
+
+```bash
+# Run commands against an explicitly mounted kubeconfig.
+podman run --rm -it --userns=keep-id \
+  --mount "type=bind,src=$PWD,dst=/work,ro" \
+  --mount "type=bind,src=$HOME/.kube/config,dst=/tmp/kubeconfig,ro" \
+  -e KUBECONFIG=/tmp/kubeconfig \
+  localhost/lab-toolbox:local kubectl get nodes
+```
+
+For KIND, use the Docker CLI and KIND **on the host** by default.
+KIND needs a working Docker or Podman provider, and the toolbox has no
+daemon by design. Do not automatically mount `/var/run/docker.sock`.
+Giving a container access to the Docker socket effectively grants
+host-level control, even if the image starts as a non-root user.
+
+The build accepts version overrides with `--build-arg` for
+`KIND_VERSION`, `ARGOCD_VERSION` and `HELM4_VERSION`.
+Test CLI compatibility with each cluster and chart before upgrading.
